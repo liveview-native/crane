@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package node;
+
+message Attribute {
+  string name = 1;
+  string value = 2;
+}
+
+message Node {
+  string type = 1;
+  string tag_name = 2;
+  repeated Attribute attributes = 3;
+  repeated Node children = 4;
+  string text_content = 5;
+}
+
