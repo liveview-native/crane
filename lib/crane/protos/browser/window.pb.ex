@@ -1,0 +1,23 @@
+defmodule Crane.Protos.Browser.Window do
+  @moduledoc false
+
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
+
+  field :name, 1, type: :string
+end
+
+defmodule Crane.Protos.Browser.WindowService.Service do
+  @moduledoc false
+
+  use GRPC.Service, name: "WindowService", protoc_gen_elixir_version: "0.14.1"
+
+  rpc :Visit, Crane.Protos.Browser.Window.Request, Crane.Protos.Browser.Window.Response
+
+  rpc :Refresh, Crane.Protos.Browser.Window, Crane.Protos.Browser.Window.Response
+end
+
+defmodule Crane.Protos.Browser.WindowService.Stub do
+  @moduledoc false
+
+  use GRPC.Stub, service: Crane.Protos.Browser.WindowService.Service
+end

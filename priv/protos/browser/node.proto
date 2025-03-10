@@ -1,11 +1,9 @@
 syntax = "proto3";
+import "browser/node/attribute.proto";
 
-package node;
+ import "elixirpb.proto";
 
-message Attribute {
-  string name = 1;
-  string value = 2;
-}
+ option (elixirpb.file).module_prefix = "Crane.Protos.Browser";
 
 message Node {
   string type = 1;

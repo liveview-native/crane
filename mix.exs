@@ -7,14 +7,37 @@ defmodule Crane.MixProject do
       version: "0.1.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      elixirc_paths: elixirc_paths(Mix.env()),
+      aliases: aliases()
+    ]
+  end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
+
+  defp aliases do
+    [
+      protoc: &run_protoc/1
     ]
   end
 
   def application do
     [
+      mod: {Crane.Application, []},
       extra_applications: [:logger]
     ]
+  end
+
+  defp run_protoc(_args) do
+    System.cmd("sh", [
+      "-c",
+      "rm -rf lib/crane/protos/*",
+    ])
+    System.cmd("sh", [
+      "-c",
+      "protoc -I priv/protos --elixir_out=plugins=grpc,paths=source_relative:./lib/crane/protos $(find priv/protos -name '*.proto' ! -name 'elixirpb.proto')"
+    ])
   end
 
   defp deps do
@@ -25,7 +48,9 @@ defmodule Crane.MixProject do
       {:http_cookie, "~> 0.7"},
       {:public_suffix, github: "axelson/publicsuffix-elixir"},
       {:live_view_native, path: "../live_view_native"},
-      {:grpc, github: "elixir-grpc/grpc"},
+      # {:grpc, github: "elixir-grpc/grpc"},
+      {:grpc, path: "../grpc"},
+      {:google_protos, "~> 0.1"},
       # {:protobuf_generate, github: "drowzy/protobuf_generate"},
       {:protobuf_generate, path: "../protobuf_generate"},
       {:test_server, "~> 0.1", only: :test},

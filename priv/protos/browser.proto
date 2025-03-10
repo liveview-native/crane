@@ -1,0 +1,22 @@
+syntax = "proto3";
+import "empty.proto";
+import "browser/window.proto";
+import "browser/header.proto";
+
+import "elixirpb.proto";
+
+option (elixirpb.file).module_prefix = "Crane.Protos";
+
+service BrowserService {
+  rpc Get(Browser) returns (Browser) {};
+  rpc NewWindow(Browser) returns (Window) {};
+  rpc CloseWindows(Browser) returns (Empty) {};
+}
+
+message Browser {
+  string name = 1;
+  map<string, Window> windows = 2;
+  repeated Header headers = 3;
+}
+
+

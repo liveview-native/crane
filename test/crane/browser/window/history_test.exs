@@ -1,7 +1,7 @@
-defmodule Crane.HistoryTest do
+defmodule Crane.Browser.Window.HistoryTest do
   use ExUnit.Case
 
-  alias Crane.Window.History
+  alias Crane.Browser.Window.History
 
   setup do
     history = %History{index: 2, stack: [

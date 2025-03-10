@@ -1,6 +1,6 @@
-defmodule Crane.Proto do
-  alias Crane.Proto.Node
-  alias Crane.Proto.Node.Attribute
+defmodule Crane.Protos do
+  alias Crane.Protos.Browser.Node
+  alias Crane.Protos.Browser.Node.Attribute
 
   def from_doc(view_tree) when is_list(view_tree) do
     %Node{
@@ -27,7 +27,9 @@ defmodule Crane.Proto do
 
   defp parse_child_nodes(nodes) when is_list(nodes) do
     Enum.reduce(nodes, [], fn
+      [comment: _comment], acc -> acc
       [:comment, _comment], acc -> acc
+      {:comment, __comment}, acc -> acc
       node, acc -> [to_node(node) | acc]
     end)
     |> Enum.reverse()

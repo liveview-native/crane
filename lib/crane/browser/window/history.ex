@@ -1,4 +1,4 @@
-defmodule Crane.Window.History do
+defmodule Crane.Browser.Window.History do
   @option_keys [:url, :method, :headers]
 
   defstruct stack: [],

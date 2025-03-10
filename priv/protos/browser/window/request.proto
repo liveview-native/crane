@@ -1,0 +1,14 @@
+syntax = "proto3";
+import "browser/header.proto";
+
+ import "elixirpb.proto";
+
+ option (elixirpb.file).module_prefix = "Crane.Protos.Browser.Window";
+
+message Request {
+  string window_name = 1;
+  string url = 2;
+  string method = 3;
+  repeated Header headers = 4;
+}
+
