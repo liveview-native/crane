@@ -70,6 +70,15 @@ defmodule Crane.Browser.Window.HistoryTest do
         {%{}, url: "/4"}
       ]
     end
+
+    test "when no history in stack don't increment index" do
+      {:ok, _frame, history} = History.push_state(%History{}, %{}, url: "/")
+
+      assert history.index == 0
+      assert history.stack == [
+        {%{}, url: "/"}
+      ]
+    end
   end
 
   describe "replace_state" do

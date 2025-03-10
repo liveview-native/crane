@@ -2,8 +2,7 @@ defmodule Crane.Browser.WindowTest do
   use ExUnit.Case
   alias Plug.Conn
 
-  alias Crane.Browser.Window
-  alias Crane.Browser
+  alias Crane.{Browser, Browser.Window}
 
   import Crane.Test.Utils
 
@@ -45,7 +44,7 @@ defmodule Crane.Browser.WindowTest do
 
       assert response.body == "<Text>Success!</Text>"
       assert window.response.body == "<Text>Success!</Text>"
-      assert window.history.index == 1
+      assert window.history.index == 0
       assert window.history.stack == [
         {%{}, headers: [], method: "GET", url: "https://dockyard.com"}
       ]
@@ -107,6 +106,56 @@ defmodule Crane.Browser.WindowTest do
       {:ok, cookie, _cookie_jar} = HttpCookie.Jar.get_cookie_header_value(browser.cookie_jar, URI.new!(url))
 
       assert cookie == "session-id=123456"
+    end
+  end
+
+  describe "forward/back/go" do
+    setup do
+      {:ok, pid} = Window.start_link(%{})
+      {:ok, window} = GenServer.call(pid, :get)
+      
+      Req.Test.stub(Window, fn(conn) ->
+        case Conn.request_url(conn) do
+          "https://dockyard.com/1" -> 
+            Conn.send_resp(conn, 200, "<Text>1</Text>")
+          "https://dockyard.com/2" -> 
+            Conn.send_resp(conn, 200, "<Text>2</Text>")
+          "https://dockyard.com/3" -> 
+            Conn.send_resp(conn, 200, "<Text>3</Text>")
+          "https://dockyard.com/4" -> 
+            Conn.send_resp(conn, 200, "<Text>4</Text>")
+          "https://dockyard.com/5" -> 
+            Conn.send_resp(conn, 200, "<Text>5</Text>")
+        end
+      end)
+
+      Req.Test.allow(Window, self(), pid_for(window))
+
+      {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/1")
+      {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/2")
+      {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/3")
+      {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/4")
+      {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/5")
+
+      {:ok, window: window}
+    end
+
+    test "will navigate history", %{window: window} do
+      {:ok, _response, window} = Window.back(window)
+      # IO.inspect(window)
+      assert window.response.body == "<Text>4</Text>"
+      {:ok, _response, window} = Window.back(window)
+      assert window.response.body == "<Text>3</Text>"
+
+      {:ok, _response, window} = Window.go(window, 2)
+      assert window.response.body == "<Text>5</Text>"
+      {:ok, _response, window} = Window.go(window, -4)
+      assert window.response.body == "<Text>1</Text>"
+
+      {:ok, _response, window} = Window.forward(window)
+      assert window.response.body == "<Text>2</Text>"
+      {:ok, _response, window} = Window.forward(window)
+      assert window.response.body == "<Text>3</Text>"
     end
   end
 

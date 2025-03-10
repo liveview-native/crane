@@ -1,4 +1,4 @@
-defmodule Crane.Protos.Browser.Window.Request do
+defmodule Crane.Protos.Browser.Request do
   @moduledoc false
 
   use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3

@@ -83,6 +83,18 @@ defmodule Crane.Browser.Window do
     end
   end
 
+  def handle_call({:go, offset}, from, %__MODULE__{history: history} = window) do
+    with {:ok, {_state, options} = _frame, history} <- History.go(history, offset),
+      {:reply, {:ok, response, window}, _window} <- handle_call({:fetch, options}, from, %__MODULE__{window | history: history}),
+      {:ok, options} <- Keyword.validate(options, [url: nil, method: "GET", headers: [], body: nil]),
+      "GET" <- Keyword.get(options, :method) do
+        window = %__MODULE__{window | response: response}
+        {:reply, {:ok, response, window}, window}
+    else
+      error -> error
+    end
+  end
+
   def handle_call({:create_socket, options}, _from, %__MODULE__{history: _history} = window) do
     options
     |> Keyword.validate([url: nil, headers: []])
@@ -107,15 +119,14 @@ defmodule Crane.Browser.Window do
     GenServer.stop(window.name, :normal)
   end
 
+  def get(%__MODULE__{name: name}),
+    do: get(name)
+
   def get(name) when is_binary(name),
-    do: get(String.to_atom(name))
+    do: get(String.to_existing_atom(name))
 
   def get(name) when is_atom(name) do
     GenServer.call(name, :get)
-  end
-
-  def open do
-    start_link([])
   end
 
   def fetch(%__MODULE__{name: name}, options) do
@@ -126,8 +137,16 @@ defmodule Crane.Browser.Window do
     GenServer.call(name, {:visit, options})
   end
 
-  def close() do
+  def forward(%__MODULE__{name: name}) do
+    GenServer.call(name, {:go, 1}, :infinity)
+  end
 
+  def back(%__MODULE__{name: name}) do
+    GenServer.call(name, {:go, -1})
+  end
+
+  def go(%__MODULE__{name: name}, offset) do
+    GenServer.call(name, {:go, offset})
   end
 
   def create_socket(%__MODULE__{name: name}, options) do
@@ -137,4 +156,5 @@ defmodule Crane.Browser.Window do
   def to_proto(%__MODULE__{name: name}) do
     %Protos.Browser.Window{name: Atom.to_string(name)}
   end
+
 end

@@ -79,7 +79,7 @@ defmodule Crane.Browser do
 
   def to_proto(%__MODULE__{name: name, headers: headers, windows: windows} = _browser) do
     headers = Enum.map(headers, &to_proto(&1))
-    windows  = Enum.into(windows, %{}, &Window.to_proto(&1))
+    windows  = Enum.into(windows, %{}, fn({name, window}) -> {Atom.to_string(name), Window.to_proto(window)} end)
 
     %Protos.Browser{name: name, headers: headers, windows: windows}
   end

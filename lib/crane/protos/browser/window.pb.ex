@@ -11,9 +11,15 @@ defmodule Crane.Protos.Browser.WindowService.Service do
 
   use GRPC.Service, name: "WindowService", protoc_gen_elixir_version: "0.14.1"
 
-  rpc :Visit, Crane.Protos.Browser.Window.Request, Crane.Protos.Browser.Window.Response
+  rpc :Visit, Crane.Protos.Browser.Request, Crane.Protos.Browser.Response
 
-  rpc :Refresh, Crane.Protos.Browser.Window, Crane.Protos.Browser.Window.Response
+  rpc :Fetch, Crane.Protos.Browser.Request, Crane.Protos.Browser.Response
+
+  rpc :Refresh, Crane.Protos.Browser.Window, Crane.Protos.Browser.Response
+
+  rpc :Forward, Crane.Protos.Browser.Window, Crane.Protos.Browser.Response
+
+  rpc :Back, Crane.Protos.Browser.Window, Crane.Protos.Browser.Response
 end
 
 defmodule Crane.Protos.Browser.WindowService.Stub do

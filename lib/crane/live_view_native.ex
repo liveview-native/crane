@@ -1,5 +1,5 @@
 defmodule Crane.LiveViewNative do
-  alias Crane.Protos.Browser.Window.{Request, Response}
+  alias Crane.Protos.Browser.{Request, Response}
 
   def init(_) do
     []

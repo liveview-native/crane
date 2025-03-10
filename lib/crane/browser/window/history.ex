@@ -15,7 +15,12 @@ defmodule Crane.Browser.Window.History do
     case Keyword.has_key?(options, :url) do
       false -> {:error, ":url option must be passed in"}
       true ->
-        new_index = index + 1
+        new_index = if stack == [] && index == 0 do
+          index
+        else
+          index + 1
+        end
+
         {kept_stack, _tossed_stack} = Enum.split(stack, new_index)
         options = Keyword.take(options, @option_keys)
         frame = {state, options}

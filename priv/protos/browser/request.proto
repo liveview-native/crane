@@ -3,7 +3,7 @@ import "browser/header.proto";
 
  import "elixirpb.proto";
 
- option (elixirpb.file).module_prefix = "Crane.Protos.Browser.Window";
+ option (elixirpb.file).module_prefix = "Crane.Protos.Browser";
 
 message Request {
   string window_name = 1;
