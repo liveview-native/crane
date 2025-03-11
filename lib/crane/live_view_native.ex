@@ -9,8 +9,15 @@ defmodule Crane.LiveViewNative do
     case next.(request, stream) do
       {:ok, stream, response} ->
         {:ok, view_tree} = LiveViewNative.Template.Parser.parse_document(response.body)
-        view_tree = Floki.find(view_tree, "[data-phx-main] > *")
-        {:ok, stream, %Response{response | view_tree: Crane.Protos.from_doc(view_tree)}}
+        stylesheets = Floki.find(view_tree, "Style") |> Floki.attribute("url")
+
+        view_trees = %{
+          "main" => Floki.find(view_tree, "[data-phx-main] > *") |> Crane.Protos.from_doc()
+        }
+
+        {:ok, stream, %Response{
+          response | view_trees: view_trees, stylesheets: stylesheets
+        }}
       error ->
         error
     end
