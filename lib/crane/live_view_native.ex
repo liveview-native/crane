@@ -9,7 +9,7 @@ defmodule Crane.LiveViewNative do
     case next.(request, stream) do
       {:ok, stream, response} ->
         {:ok, view_tree} = LiveViewNative.Template.Parser.parse_document(response.body)
-        view_tree = Floki.find(view_tree, "[data-phx-main]")
+        view_tree = Floki.find(view_tree, "[data-phx-main] > *")
         {:ok, stream, %Response{response | view_tree: Crane.Protos.from_doc(view_tree)}}
       error ->
         error
