@@ -12,6 +12,7 @@ syntax = "proto2";
 package elixirpb;
 
 import "google/protobuf/descriptor.proto";
+option swift_prefix = "Crane";
 
 // File level options
 //

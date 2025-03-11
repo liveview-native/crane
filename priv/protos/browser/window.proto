@@ -5,6 +5,7 @@ import "browser/response.proto";
 import "elixirpb.proto";
 
 option (elixirpb.file).module_prefix = "Crane.Protos.Browser";
+option swift_prefix = "Crane";
 
 service WindowService {
   rpc Visit(Request) returns (Response) {};

@@ -5,6 +5,7 @@ import "browser/header.proto";
  import "elixirpb.proto";
 
  option (elixirpb.file).module_prefix = "Crane.Protos.Browser";
+option swift_prefix = "Crane";
 
 message Response {
   string body = 1;
