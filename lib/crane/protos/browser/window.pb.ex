@@ -20,6 +20,8 @@ defmodule Crane.Protos.Browser.WindowService.Service do
   rpc :Forward, Crane.Protos.Browser.Window, Crane.Protos.Browser.Response
 
   rpc :Back, Crane.Protos.Browser.Window, Crane.Protos.Browser.Response
+
+  rpc :Close, Crane.Protos.Browser.Window, Crane.Protos.Browser.Response
 end
 
 defmodule Crane.Protos.Browser.WindowService.Stub do

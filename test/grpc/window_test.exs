@@ -50,6 +50,7 @@ defmodule Crane.GRPC.WindowTest do
         {:ok, response} = Client.visit(channel, request)
 
         assert response.body == "<Text>2</Text>"
+        assert response.status == 200
 
         {:ok, window} = Window.get(window.name)
 

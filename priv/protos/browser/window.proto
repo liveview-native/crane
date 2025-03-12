@@ -13,6 +13,7 @@ service WindowService {
   rpc Refresh(Window) returns (Response) {};
   rpc Forward(Window) returns (Response) {};
   rpc Back(Window) returns (Response) {};
+  rpc Close(Window) returns (Response) {};
 }
 
 message Window {

@@ -1,6 +1,7 @@
 syntax = "proto3";
 import "browser/node.proto";
 import "browser/header.proto";
+import "browser/window/history.proto";
 
 import "elixirpb.proto";
 
@@ -14,4 +15,5 @@ message Response {
   repeated string stylesheets = 3;
   repeated Header headers = 4;
   int32 status = 5;
+  History history = 6;
 }

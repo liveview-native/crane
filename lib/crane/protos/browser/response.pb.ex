@@ -23,4 +23,5 @@ defmodule Crane.Protos.Browser.Response do
   field :stylesheets, 3, repeated: true, type: :string
   field :headers, 4, repeated: true, type: Crane.Protos.Browser.Header
   field :status, 5, type: :int32
+  field :history, 6, type: Crane.Protos.Browser.Window.History
 end

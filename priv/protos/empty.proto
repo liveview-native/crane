@@ -1,8 +1,8 @@
 syntax = "proto3";
 
- import "elixirpb.proto";
+import "elixirpb.proto";
 
- option (elixirpb.file).module_prefix = "Crane.Protos";
+option (elixirpb.file).module_prefix = "Crane.Protos";
 option swift_prefix = "Crane";
 
 message Empty {}

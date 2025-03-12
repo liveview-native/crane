@@ -1,0 +1,12 @@
+syntax = "proto3";
+import "browser/window/history/frame.proto";
+
+import "elixirpb.proto";
+
+option (elixirpb.file).module_prefix = "Crane.Protos.Browser.Window";
+option swift_prefix = "Crane";
+
+message History {
+  int32 index = 1;
+  repeated Frame stack = 2;
+}

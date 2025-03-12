@@ -42,8 +42,8 @@ defmodule Crane.Browser.WindowTest do
 
       {:ok, response, window} = Window.visit(window, url: "https://dockyard.com")
 
+      assert response == window.response
       assert response.body == "<Text>Success!</Text>"
-      assert window.response.body == "<Text>Success!</Text>"
       assert window.history.index == 0
       assert window.history.stack == [
         {%{}, headers: [], method: "GET", url: "https://dockyard.com"}

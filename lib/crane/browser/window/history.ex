@@ -1,6 +1,8 @@
 defmodule Crane.Browser.Window.History do
   @option_keys [:url, :method, :headers]
 
+  alias Crane.Protos
+
   defstruct stack: [],
     index: 0
 
@@ -46,5 +48,17 @@ defmodule Crane.Browser.Window.History do
           %{history | stack: List.replace_at(stack, index, frame)}
         }
     end
+  end
+
+  def to_protoc(%__MODULE__{index: index, stack: stack}) do
+    %Protos.Browser.Window.History{
+      index: index,
+      stack: Enum.map(stack, fn(frame) ->
+        %Protos.Browser.Window.History.Frame{
+          state: elem(frame, 0),
+          url: elem(frame, 1)[:url]
+        }
+      end)
+    }
   end
 end
