@@ -42,11 +42,20 @@ defmodule Crane.GRPC.Window do
     build_response(response, window)
   end
 
-  def refresh(request, _string) do
+  def refresh(request, _stream) do
     {:ok, window} = Window.get(String.to_existing_atom(request.name))
     {:ok, response, window} = Window.go(window, 0)
 
     build_response(response, window)
+  end
+
+  def close(request, _stream) do
+    {:ok, window} = Window.get(String.to_existing_atom(request.name))
+    :ok = Window.close(window)
+
+    %Protos.Browser.Window{
+      name: ""
+    }
   end
 
   defp to_request_opts(%Protos.Browser.Request{url: url, method: _method, headers: _headers}) do

@@ -1,7 +1,7 @@
 syntax = "proto3";
+
 import "browser/request.proto";
 import "browser/response.proto";
-
 import "elixirpb.proto";
 
 option (elixirpb.file).module_prefix = "Crane.Protos.Browser";
@@ -13,7 +13,7 @@ service WindowService {
   rpc Refresh(Window) returns (Response) {};
   rpc Forward(Window) returns (Response) {};
   rpc Back(Window) returns (Response) {};
-  rpc Close(Window) returns (Response) {};
+  rpc Close(Window) returns (Window) {};
 }
 
 message Window {

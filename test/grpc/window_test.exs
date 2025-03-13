@@ -23,7 +23,7 @@ defmodule Crane.GRPC.WindowTest do
         "https://dockyard.com/4" -> 
           Conn.send_resp(conn, 200, "<Text>4</Text>")
         "https://dockyard.com/5" -> 
-          Conn.send_resp(conn, 200, "<Text>5</Text>")
+          Conn.send_resp(conn, 200, "<Text>#{:erlang.monotonic_time()}</Text>")
       end
     end)
 
@@ -106,6 +106,53 @@ defmodule Crane.GRPC.WindowTest do
         {:ok, window} = Window.get(window.name)
 
         assert length(window.history.stack) == 3
+      end)
+    end
+  end
+
+  describe "refresh" do
+    test "will get the response from the url", %{window: window} do
+      run_server(Server, fn port ->
+        {:ok, channel} = GRPC.Stub.connect("localhost:#{port}")
+
+        request =
+          %Protos.Browser.Request{
+            url: "https://dockyard.com/5",
+            window_name: Atom.to_string(window.name)
+          }
+
+        {:ok, original_response} = Client.visit(channel, request)
+
+        request = %Protos.Browser.Window{
+          name: Atom.to_string(window.name)
+        }
+
+        {:ok, refresh_response} = Client.refresh(channel, request)
+        {:ok, window} = Window.get(window.name)
+
+        assert refresh_response.body != original_response.body
+        assert length(window.history.stack) == 4
+      end)
+    end
+  end
+
+  describe "close" do
+    test "an active window" do
+      run_server(Server, fn port ->
+        {:ok, channel} = GRPC.Stub.connect("localhost:#{port}")
+        {:ok, window} = Window.new()
+
+        pid = Process.whereis(window.name)
+
+        request = %Protos.Browser.Window{
+          name: Atom.to_string(window.name)
+        }
+
+        {:ok, response} = Client.close(channel, request)
+
+        assert response.name == ""
+
+        refute Process.alive?(pid)
       end)
     end
   end

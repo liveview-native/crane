@@ -1,6 +1,6 @@
 syntax = "proto3";
-import "browser/node/attribute.proto";
 
+import "browser/node/attribute.proto";
 import "elixirpb.proto";
 
 option (elixirpb.file).module_prefix = "Crane.Protos.Browser";
