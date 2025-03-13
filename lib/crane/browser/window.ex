@@ -61,6 +61,15 @@ defmodule Crane.Browser.Window do
       {:error, invalid_options} ->
         {:reply, {:invalid_options, invalid_options}, window}
     end
+
+  rescue
+    error ->
+      response = %Req.Response{
+        status: 400,
+        body: error.message
+      }
+
+      {:reply, {:ok, response, window}, window}
   end
 
   def handle_call({:visit, options}, from, window) do
