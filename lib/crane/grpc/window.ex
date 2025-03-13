@@ -5,7 +5,7 @@ defmodule Crane.GRPC.Window do
   def visit(request, _stream) do
     {:ok, window} = Window.get(String.to_existing_atom(request.window_name))
 
-    {:ok, response, _window} = Window.visit(window, to_request_opts(request))
+    {:ok, response, window} = Window.visit(window, to_request_opts(request))
 
     # headers = Enum.map(response.headers, fn(%{name: name, value: value}) ->
     #   {name, value}

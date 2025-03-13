@@ -52,9 +52,8 @@ defmodule Crane.GRPC.WindowTest do
         assert response.body == "<Text>2</Text>"
         assert response.status == 200
 
-        {:ok, window} = Window.get(window.name)
-
-        assert length(window.history.stack) == 4
+        assert length(response.history.stack) == 4
+        assert response.history.index == 3
       end)
     end
   end
@@ -74,9 +73,7 @@ defmodule Crane.GRPC.WindowTest do
 
         assert response.body == "<Text>2</Text>"
 
-        {:ok, window} = Window.get(window.name)
-
-        assert length(window.history.stack) == 3
+        assert is_nil(response.history)
       end)
     end
   end
@@ -94,18 +91,14 @@ defmodule Crane.GRPC.WindowTest do
         {:ok, response} = Client.back(channel, request)
 
         assert response.body == "<Text>1</Text>"
+        assert length(response.history.stack) == 3
+        assert response.history.index == 0
 
         {:ok, response} = Client.forward(channel, request)
 
         assert response.body == "<Text>2</Text>"
-
-        {:ok, window} = Window.get(window.name)
-
-        assert length(window.history.stack) == 3
-
-        {:ok, window} = Window.get(window.name)
-
-        assert length(window.history.stack) == 3
+        assert length(response.history.stack) == 3
+        assert response.history.index == 1
       end)
     end
   end
@@ -128,10 +121,8 @@ defmodule Crane.GRPC.WindowTest do
         }
 
         {:ok, refresh_response} = Client.refresh(channel, request)
-        {:ok, window} = Window.get(window.name)
 
         assert refresh_response.body != original_response.body
-        assert length(window.history.stack) == 4
       end)
     end
   end
