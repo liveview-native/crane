@@ -4,7 +4,7 @@ defmodule Crane.Protos.Browser.Response.ViewTreesEntry do
   use Protobuf, map: true, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   field :key, 1, type: :string
-  field :value, 2, type: Crane.Protos.Browser.Node
+  field :value, 2, type: Crane.Protos.Browser.Document
 end
 
 defmodule Crane.Protos.Browser.Response do

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "browser/node.proto";
+import "browser/document.proto";
 import "browser/header.proto";
 import "browser/window/history.proto";
 import "elixirpb.proto";
@@ -11,7 +11,7 @@ option swift_prefix = "Crane";
 message Response {
   string body = 1;
 
-  map<string, Node> view_trees = 2;
+  map<string, Document> view_trees = 2;
   repeated string stylesheets = 3;
   repeated Header headers = 4;
   int32 status = 5;

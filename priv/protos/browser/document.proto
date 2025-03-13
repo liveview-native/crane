@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+import "browser/document/node.proto";
+import "elixirpb.proto";
+
+option (elixirpb.file).module_prefix = "Crane.Protos.Browser";
+option swift_prefix = "Crane";
+
+message Document {
+  repeated Node nodes = 4;
+}
+

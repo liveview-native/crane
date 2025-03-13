@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-import "browser/node/attribute.proto";
+import "browser/document/node/attribute.proto";
 import "elixirpb.proto";
 
-option (elixirpb.file).module_prefix = "Crane.Protos.Browser";
+option (elixirpb.file).module_prefix = "Crane.Protos.Browser.Document";
 option swift_prefix = "Crane";
 
 message Node {
@@ -12,5 +12,6 @@ message Node {
   repeated Attribute attributes = 3;
   repeated Node children = 4;
   string text_content = 5;
+  int32 id = 6;
 }
 

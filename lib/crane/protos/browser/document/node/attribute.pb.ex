@@ -1,4 +1,4 @@
-defmodule Crane.Protos.Browser.Node.Attribute do
+defmodule Crane.Protos.Browser.Document.Node.Attribute do
   @moduledoc false
 
   use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
