@@ -3,7 +3,8 @@ defmodule Crane.Application do
   def start(_type, _args) do
     children = [
       {Crane.Browser, []},
-      {GRPC.Server.Supervisor, endpoint: Crane.GRPC.Endpoint, port: 50051, start_server: true}
+      {Bandit, plug: Crane.Endpoint.Debugger},
+      {GRPC.Server.Supervisor, endpoint: Crane.Endpoint.GRPC, port: 50051, start_server: true}
     ]
 
     opts = [strategy: :one_for_one, name: __MODULE__]

@@ -1,4 +1,4 @@
-defmodule Crane.GRPC.Endpoint do
+defmodule Crane.Endpoint.GRPC do
   use GRPC.Endpoint
 
   intercept GRPC.Server.Interceptors.Logger

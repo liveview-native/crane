@@ -47,13 +47,13 @@ defmodule Crane.MixProject do
       {:websockex, "~> 0.4"},
       {:http_cookie, "~> 0.7"},
       {:public_suffix, github: "axelson/publicsuffix-elixir"},
-      {:live_view_native, path: "../live_view_native"},
-      # {:grpc, github: "elixir-grpc/grpc"},
-      {:grpc, path: "../grpc"},
+      {:live_view_native, "~> 0.4.0-rc.1"},
+      {:grpc, github: "elixir-grpc/grpc"},
       {:google_protos, "~> 0.1"},
-      # {:protobuf_generate, github: "drowzy/protobuf_generate"},
-      {:protobuf_generate, path: "../protobuf_generate"},
+      {:protobuf_generate, github: "drowzy/protobuf_generate"},
       {:test_server, "~> 0.1", only: :test},
+      {:bandit, "~> 1.0"},
+      {:cdpotion, "~> 0.1.0"},
     ]
   end
 end
