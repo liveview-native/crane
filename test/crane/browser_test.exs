@@ -29,6 +29,7 @@ defmodule Crane.BrowserTest do
       {:ok, %Browser{} = browser} = Browser.get()
 
       assert browser.windows[window.name] == window
+      assert window.history.index == -1
     end
 
     test "with initial state will create new window with that state" do
