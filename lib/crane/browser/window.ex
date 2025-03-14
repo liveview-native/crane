@@ -66,7 +66,7 @@ defmodule Crane.Browser.Window do
     error ->
       response = %Req.Response{
         status: 400,
-        body: error.message
+        body: Exception.message(error)
       }
 
       {:reply, {:ok, response, window}, window}
