@@ -7,14 +7,6 @@ defmodule Crane.GRPC.Window do
 
     {:ok, response, window} = Window.visit(window, to_request_opts(request))
 
-    # headers = Enum.map(response.headers, fn(%{name: name, value: value}) ->
-    #   {name, value}
-    # end)
-    #
-    # {:ok, browser} = Browser.get(%Browser{headers: headers})
-    #
-    # Browser.to_proto(browser)
-
     build_response(response, window)
   end
 

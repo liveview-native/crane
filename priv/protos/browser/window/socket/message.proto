@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+import "elixirpb.proto";
+
+option (elixirpb.file).module_prefix = "Crane.Protos.Browser.Window.Socket";
+option swift_prefix = "Crane";
+
+message Message {
+  string type = 1;
+  string data = 2;
+  string socket_name = 3;
+}
+
+
+

@@ -43,6 +43,7 @@ defmodule Crane.MixProject do
   defp deps do
     [
       {:req, "~> 0.5"},
+      {:mint_web_socket, "~> 1.0.4"},
       {:floki, "~> 0.37"},
       {:websockex, "~> 0.4"},
       {:http_cookie, "~> 0.7"},
