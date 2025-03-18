@@ -21,3 +21,10 @@ crane-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+Package.resolved
+Sources/Crane/generated/**/*
+.build
+.swiftpm
+.vscode
+**/xcuserdata

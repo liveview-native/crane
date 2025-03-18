@@ -3,7 +3,7 @@ defmodule Crane.Application do
   def start(_type, _args) do
     children = [
       {Crane.Browser, []},
-      {Bandit, plug: Crane.Endpoint.Debugger},
+      # {Bandit, plug: Crane.Endpoint.Debugger},
       {GRPC.Server.Supervisor, endpoint: Crane.Endpoint.GRPC, port: 50051, start_server: true}
     ]
 
@@ -11,4 +11,3 @@ defmodule Crane.Application do
     Supervisor.start_link(children, opts)
   end
 end
-

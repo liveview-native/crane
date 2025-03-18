@@ -19,3 +19,7 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at <https://hexdocs.pm/crane>.
 
+```
+protoc -I priv/protos --swift_opt=Visibility=Public --swift_out=./Sources/Crane/generated $(find priv/protos -name '*.proto' ! -name 'elixirpb.proto')
+protoc -I priv/protos --grpc-swift_out=./Sources/Crane/generated $(find priv/protos -name '*.proto' ! -name 'elixirpb.proto')
+```
