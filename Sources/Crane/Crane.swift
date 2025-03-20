@@ -55,7 +55,15 @@ public final class Crane: @unchecked Sendable {
         self.browserService = CraneBrowserService.Client(wrapping: self.client)
         self.windowService = CraneWindowService.Client(wrapping: client)
         self.runloop = Task { [weak client] in
-            try await client?.runConnections()
+            while true {
+                do {
+                    try await client?.runConnections()
+                    return
+                } catch {
+                    print(error)
+                    print("retrying")
+                }
+            }
         }
     }
     
