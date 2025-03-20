@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		007A39CB2D8C645400597DB4 /* ElixirKitCrane in Frameworks */ = {isa = PBXBuildFile; productRef = 007A39CA2D8C645400597DB4 /* ElixirKitCrane */; };
 		008F5FE72D80E0A800C7171C /* LiveViewNative in Frameworks */ = {isa = PBXBuildFile; productRef = 008F5FE62D80E0A800C7171C /* LiveViewNative */; };
 /* End PBXBuildFile section */
 
@@ -27,6 +28,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				007A39CB2D8C645400597DB4 /* ElixirKitCrane in Frameworks */,
 				008F5FE72D80E0A800C7171C /* LiveViewNative in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -71,6 +73,7 @@
 			name = CraneDemo;
 			packageProductDependencies = (
 				008F5FE62D80E0A800C7171C /* LiveViewNative */,
+				007A39CA2D8C645400597DB4 /* ElixirKitCrane */,
 			);
 			productName = CraneDemo;
 			productReference = 008F5FD62D80E04D00C7171C /* CraneDemo.app */;
@@ -102,6 +105,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				008F5FE52D80E0A800C7171C /* XCLocalSwiftPackageReference "../../Packages/liveview-client-swiftui" */,
+				007A39C92D8C645400597DB4 /* XCLocalSwiftPackageReference "../ElixirKitCrane" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 008F5FD72D80E04D00C7171C /* Products */;
@@ -346,6 +350,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		007A39C92D8C645400597DB4 /* XCLocalSwiftPackageReference "../ElixirKitCrane" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../ElixirKitCrane;
+		};
 		008F5FE52D80E0A800C7171C /* XCLocalSwiftPackageReference "../../Packages/liveview-client-swiftui" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "../../Packages/liveview-client-swiftui";
@@ -353,6 +361,10 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		007A39CA2D8C645400597DB4 /* ElixirKitCrane */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ElixirKitCrane;
+		};
 		008F5FE62D80E0A800C7171C /* LiveViewNative */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = LiveViewNative;

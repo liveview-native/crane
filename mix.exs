@@ -50,11 +50,13 @@ defmodule Crane.MixProject do
       {:public_suffix, github: "axelson/publicsuffix-elixir"},
       {:live_view_native, "~> 0.4.0-rc.1"},
       {:grpc, github: "elixir-grpc/grpc"},
-      {:google_protos, "~> 0.1"},
+      # {:google_protos, "~> 0.1"},
       {:protobuf_generate, github: "drowzy/protobuf_generate"},
       {:test_server, "~> 0.1", only: :test},
       {:bandit, "~> 1.0"},
       {:cdpotion, "~> 0.1.0"},
+
+      {:elixir_kit, path: "/Users/carson.katri/Documents/LiveViewNative/Experiments/ElixirKit/elixir_kit", only: :dev}
     ]
   end
 end

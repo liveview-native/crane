@@ -262,8 +262,8 @@ struct ContentView: View {
         }
         .environment(crane)
         .task {
-            let window = try! await crane.newWindow(url: URL(string: "http://localhost:4000")!)
-            self.selectedTab = window.window.name
+//            let window = try! await crane.newWindow(url: URL(string: "http://localhost:4000")!)
+//            self.selectedTab = window.window.name
         }
         ZStack(alignment: .top) {
             // Content Area

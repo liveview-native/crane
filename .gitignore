@@ -22,9 +22,15 @@ crane-*.tar
 # Temporary files, for example, from tests.
 /tmp/
 
+.DS_Store
+
 Package.resolved
 Sources/Crane/generated/**/*
 .build
 .swiftpm
 .vscode
 **/xcuserdata
+
+ElixirKitCrane
+
+/_elixir_kit_build/
