@@ -4,7 +4,7 @@ defmodule Crane.Browser.Window.History do
   alias Crane.Protos
 
   defstruct stack: [],
-    index: 0
+    index: -1
 
   def go(%__MODULE__{index: index, stack: stack} = history, offset \\ 0) do
     case Enum.at(stack, index + offset) do
@@ -17,20 +17,16 @@ defmodule Crane.Browser.Window.History do
     case Keyword.has_key?(options, :url) do
       false -> {:error, ":url option must be passed in"}
       true ->
-        new_index = if stack == [] && index == 0 do
-          index
-        else
-          index + 1
-        end
+        index = index + 1
 
-        {kept_stack, _tossed_stack} = Enum.split(stack, new_index)
+        {kept_stack, _tossed_stack} = Enum.split(stack, index)
         options = Keyword.take(options, @option_keys)
         frame = {state, options}
 
         {
           :ok,
           frame,
-          %{history | stack: List.insert_at(kept_stack, new_index, frame), index: new_index}
+          %{history | stack: List.insert_at(kept_stack, index, frame), index: index}
         }
     end
   end

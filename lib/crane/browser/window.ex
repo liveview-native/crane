@@ -1,35 +1,36 @@
 defmodule Crane.Browser.Window do
+  use GenServer
+
   alias Crane.Browser
-  alias Crane.Browser.Window.{History, ViewTree}
+  alias Crane.Browser.Window.{History, ViewTree, WebSocket}
   alias Crane.Protos
+
+  import Crane.Utils, only: [
+    generate_name: 1
+  ]
 
   defstruct history: %History{},
     browser_name: nil,
     view_tree: %ViewTree{},
     response: nil,
     name: nil,
-    sockets: []
-
-  use GenServer
+    sockets: %{},
+    refs: %{}
 
   def start_link(state) when is_map(state) do
-    name = Map.get_lazy(state, :name, fn ->
-      "window-" <>
-      (:crypto.hash(:sha, "#{:erlang.system_time(:nanosecond)}")
-      |> Base.encode32(case: :lower))
-      |> String.to_atom()
-    end)
-
     state =
       state
-      |> Map.put(:name, name)
+      |> Map.put_new_lazy(:name, fn ->
+        generate_name(:window)
+      end)
       |> Map.take([:history, :name, :response, :view_tree])
 
-    GenServer.start_link(__MODULE__, state, name: name)
+    GenServer.start_link(__MODULE__, state, name: state.name)
   end
 
   @impl true
   def init(state) do
+    Process.flag(:trap_exit, true)
     {:ok, struct(__MODULE__, state)}
   end
 
@@ -66,7 +67,7 @@ defmodule Crane.Browser.Window do
     error ->
       response = %Req.Response{
         status: 400,
-        body: error.message
+        body: Exception.message(error)
       }
 
       {:reply, {:ok, response, window}, window}
@@ -104,15 +105,42 @@ defmodule Crane.Browser.Window do
     end
   end
 
-  def handle_call({:create_socket, options}, _from, %__MODULE__{history: _history} = window) do
-    options
-    |> Keyword.validate([url: nil, headers: []])
-    |> case do
-      {:ok, _options} ->
-        nil
-      {:error, invalid_options} ->
-        {:reply, {:invalid_options, invalid_options}, window}
+  def handle_call({:new_socket, options}, _from, %__MODULE__{sockets: sockets, refs: refs} = window) do
+    with {:ok, options} <- Keyword.validate(options, [url: nil, headers: [], window_name: nil]),
+    {:ok, socket} <- WebSocket.new(window, options),
+    {sockets, refs} <- monitor_socket(socket, sockets, refs) do
+      {:reply, {:ok, socket}, %__MODULE__{window | sockets: sockets, refs: refs}}
+    else
+      {:error, error} ->
+        {:reply, error, window}
+      error ->
+        {:reply, error, window}
     end
+  end
+
+  defp monitor_socket(socket, sockets, refs) do
+    pid = Process.whereis(socket.name)
+    ref = Process.monitor(pid)
+    sockets = Map.put(sockets, socket.name, socket)
+    refs = Map.put(refs, ref, {:sockets, socket.name})
+
+    {sockets, refs}
+  end
+
+  @impl true
+  def handle_info({:DOWN, ref, :process, _pid, _reason}, %{refs: refs} = window) do
+    {{type, name}, refs} = Map.pop(refs, ref)
+
+    resources = Map.get(window, type)
+    resources = Map.delete(resources, name)
+    window = Map.put(window, type, resources)
+
+    {:noreply, %__MODULE__{window | refs: refs}}
+  end
+
+  def handle_info(msg, window) do
+    IO.inspect(msg, label: "Unhandled Info")
+    {:noreply, window}
   end
 
   def new(state \\ %{}) when is_map(state) do
@@ -158,12 +186,12 @@ defmodule Crane.Browser.Window do
     GenServer.call(name, {:go, offset})
   end
 
-  def create_socket(%__MODULE__{name: name}, options) do
-    GenServer.call(name, {:create_socket, options})
+  def new_socket(%__MODULE__{name: name}, options) do
+    options = Keyword.put(options, :window_name, name)
+    GenServer.call(name, {:new_socket, options})
   end
 
   def to_proto(%__MODULE__{name: name}) do
     %Protos.Browser.Window{name: Atom.to_string(name)}
   end
-
 end

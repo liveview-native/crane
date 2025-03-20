@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+import "empty.proto";
+import "browser/window/socket/message.proto";
+import "elixirpb.proto";
+
+option (elixirpb.file).module_prefix = "Crane.Protos.Browser.Window";
+option swift_prefix = "Crane";
+
+service SocketService {
+  rpc Send(Message) returns (Empty) {};
+  rpc Receive(Socket) returns (stream Message) {};
+}
+
+message Socket {
+  string name = 1;
+}
+
+

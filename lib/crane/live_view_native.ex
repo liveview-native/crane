@@ -5,10 +5,9 @@ defmodule Crane.LiveViewNative do
     []
   end
 
-  def call(request, stream, next, _options) do
-    case next.(request, stream) do
-      {:ok, stream, %Response{body: body} = response} ->
-        {:ok, view_tree} = LiveViewNative.Template.Parser.parse_document(body)
+  def call(request, stream, next, options) do
+    with {:ok, stream, %Response{status: 200, body: body} = response} <- next.(request, stream),
+        {:ok, view_tree} <- LiveViewNative.Template.Parser.parse_document(body) do
 
         stylesheets = Floki.find(view_tree, "Style") |> Floki.attribute("url")
 
@@ -24,8 +23,8 @@ defmodule Crane.LiveViewNative do
           stream,
           %Response{response | view_trees: view_trees, stylesheets: stylesheets}
         }
-      other ->
-        other
+    else
+      other -> other
     end
   end
 

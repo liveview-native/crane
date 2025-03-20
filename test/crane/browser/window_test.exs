@@ -86,7 +86,7 @@ defmodule Crane.Browser.WindowTest do
 
       assert window.response == nil
       assert response.body == "<Text>Success!</Text>"
-      assert window.history.index == 0
+      assert window.history.index == -1
       assert window.history.stack == []
     end
 

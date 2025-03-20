@@ -22,6 +22,8 @@ defmodule Crane.Protos.Browser.WindowService.Service do
   rpc :Back, Crane.Protos.Browser.Window, Crane.Protos.Browser.Response
 
   rpc :Close, Crane.Protos.Browser.Window, Crane.Protos.Browser.Window
+
+  rpc :NewSocket, Crane.Protos.Browser.Window, Crane.Protos.Browser.Window.Socket
 end
 
 defmodule Crane.Protos.Browser.WindowService.Stub do

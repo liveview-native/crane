@@ -24,6 +24,7 @@ defmodule Crane.Browser do
 
   def init(args) do
     headers = Keyword.get(args, :headers, [])
+    Process.flag(:trap_exit, true)
 
     {:ok, %__MODULE__{
       headers: @default_headers ++ headers
@@ -45,8 +46,18 @@ defmodule Crane.Browser do
     end
   end
 
+  def handle_call(msg, _from, browser) do
+    IO.inspect(msg, label: "Unhandled Call")
+    {:noreply, browser}
+  end
+
   def handle_cast({:update_cookie_jar, cookie_jar}, browser) do
     {:noreply, %__MODULE__{browser | cookie_jar: cookie_jar}}
+  end
+
+  def handle_cast(msg, browser) do
+    IO.inspect(msg, label: "Unhandled Cast")
+    {:noreply, browser}
   end
 
   defp monitor_window(window, windows, refs) do
@@ -63,6 +74,11 @@ defmodule Crane.Browser do
     windows = Map.delete(windows, name)
 
     {:noreply, %__MODULE__{browser | windows: windows, refs: refs}}
+  end
+
+  def handle_info(msg, browser) do
+    IO.inspect(msg, label: "Unhandled Info")
+    {:noreply, browser}
   end
 
   def update_cookie_jar(cookie_jar) do
