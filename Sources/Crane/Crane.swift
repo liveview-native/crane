@@ -69,7 +69,9 @@ public final class Crane: @unchecked Sendable {
     
     @discardableResult
     public func newWindow(url: URL) async throws -> Window {
-        let url = url.appending(queryItems: [.init(name: "_format", value: "swiftui")])
+        let url = (URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.contains(where: { $0.name == "_format" }) ?? false)
+            ? url
+            : url.appending(queryItems: [.init(name: "_format", value: "swiftui")])
         
         let craneWindow = try await browserService.newWindow(CraneBrowser())
         var request = CraneRequest()
@@ -105,7 +107,9 @@ public final class Crane: @unchecked Sendable {
     
     @discardableResult
     public func navigate(window: Window, to url: URL) async throws -> Window {
-        let url = url.appending(queryItems: [.init(name: "_format", value: "swiftui")])
+        let url = (URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.contains(where: { $0.name == "_format" }) ?? false)
+            ? url
+            : url.appending(queryItems: [.init(name: "_format", value: "swiftui")])
         
         var request = CraneRequest()
         request.url = url.absoluteString

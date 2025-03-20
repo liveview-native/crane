@@ -17,6 +17,29 @@ struct ContentView: View {
     
     @State private var selectedTab: String?
     
+    @AppStorage("favorites") private var favorites = Favorites(value: [])
+    
+    struct Favorites: RawRepresentable, Codable {
+        let value: Set<URL>
+        
+        init(value: Set<URL>) {
+            self.value = value
+        }
+        
+        init?(rawValue: String) {
+            guard let result = try? JSONDecoder().decode(Set<URL>.self, from: Data(rawValue.utf8))
+            else { return nil }
+            self.value = result
+        }
+        
+        var rawValue: String {
+            guard let data = try? JSONEncoder().encode(self.value),
+                  let value = String(data: data, encoding: .utf8)
+            else { return "[]" }
+            return value
+        }
+    }
+    
     struct StylesheetLoader<Content: View>: View {
         let url: URL
         @ViewBuilder let content: (Stylesheet<EmptyRegistry>?) -> Content
@@ -224,6 +247,30 @@ struct ContentView: View {
                         }
                     }
                 }
+        } newTabView: {
+            NavigationStack {
+                if favorites.value.isEmpty {
+                    ContentUnavailableView("New Tab", systemImage: "plus.square.fill.on.square.fill")
+                        .containerRelativeFrame(.horizontal)
+                } else {
+                    List {
+                        Section("Favorites") {
+                            ForEach(favorites.value.sorted(by: { $0.absoluteString < $1.absoluteString }), id: \.absoluteString) { favorite in
+                                Button(favorite.absoluteString) {
+                                    Task {
+                                        let window = try! await crane.newWindow(url: favorite)
+                                        selectedTab = window.window.name
+                                        urlText = ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .listStyle(.plain)
+                    .navigationTitle("New Tab")
+                }
+            }
+            .containerRelativeFrame(.horizontal)
         } tabActions: {
             Button(role: .destructive) {
                 Task {
@@ -238,6 +285,24 @@ struct ContentView: View {
             let window = crane.windows.first(where: { $0.window.name == selectedTab })
             if let window {
                 WindowControls(window: window)
+                ShareLink(item: window.url) {
+                    Image(systemName: "square.and.arrow.up")
+                }
+                Button {
+                    var value = favorites.value
+                    if favorites.value.contains(window.url) {
+                        value.remove(window.url)
+                    } else {
+                        value.insert(window.url)
+                    }
+                    favorites = .init(value: value)
+                } label: {
+                    if favorites.value.contains(window.url) {
+                        Image(systemName: "star.fill")
+                    } else {
+                        Image(systemName: "star")
+                    }
+                }
             } else {
                 Button {} label: {
                     Image(systemName: "chevron.left")
@@ -247,17 +312,14 @@ struct ContentView: View {
                     Image(systemName: "chevron.right")
                 }
                 .disabled(true)
-            }
-            
-            Button {
-                
-            } label: {
-                Image(systemName: "square.and.arrow.up")
-            }
-            Button {
-                
-            } label: {
-                Image(systemName: "book")
+                Button {} label: {
+                    Image(systemName: "square.and.arrow.up")
+                }
+                .disabled(true)
+                Button {} label: {
+                    Image(systemName: "star")
+                }
+                .disabled(true)
             }
         }
         .environment(crane)

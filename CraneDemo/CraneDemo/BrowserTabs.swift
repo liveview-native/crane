@@ -7,12 +7,13 @@
 
 import SwiftUI
 
-struct BrowserTabsView<ID: Hashable, Content: View, NewTabForm: View, TabActions: View, Controls: View>: View {
+struct BrowserTabsView<ID: Hashable, Content: View, NewTabForm: View, NewTabView: View, TabActions: View, Controls: View>: View {
     @Binding var selectedTab: ID?
     let chromeVisible: Bool
     
     @ViewBuilder let content: () -> Content
     @ViewBuilder let newTabForm: () -> NewTabForm
+    @ViewBuilder let newTabView: () -> NewTabView
     @ViewBuilder let tabActions: () -> TabActions
     @ViewBuilder let controls: () -> Controls
     
@@ -34,15 +35,14 @@ struct BrowserTabsView<ID: Hashable, Content: View, NewTabForm: View, TabActions
                     .containerRelativeFrame(.horizontal)
                     .id(subview.containerValues.browserTabValue)
                 }
-                ContentUnavailableView("New Tab", systemImage: "plus.square.fill.on.square.fill")
-                    .containerRelativeFrame(.horizontal)
+                newTabView()
             }
             .scrollTargetLayout()
         }
         .scrollDisabled(true)
         .scrollPosition($scrollPosition)
         .frame(maxHeight: .infinity)
-        .overlay(alignment: .bottom) {
+        .safeAreaInset(edge: .bottom) {
             ScrollViewReader { proxy in
                 VStack {
                     VStack(spacing: 0) {
@@ -157,6 +157,9 @@ extension ContainerValues {
         TextField(text: .constant(""), prompt: Text("New Tab")) {
             EmptyView()
         }
+    } newTabView: {
+        ContentUnavailableView("New Tab", systemImage: "plus.square.fill.on.square.fill")
+            .containerRelativeFrame(.horizontal)
     } tabActions: {
         Button {
             
