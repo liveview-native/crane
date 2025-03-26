@@ -25,6 +25,13 @@ defmodule Crane.GRPC.WindowTest do
           Conn.send_resp(conn, 200, "<Text>4</Text>")
         "https://dockyard.com/5" -> 
           Conn.send_resp(conn, 200, "<Text>#{:erlang.monotonic_time()}</Text>")
+        "https://dockyard.com/6" ->
+          case Conn.get_req_header(conn, "accept") do
+            ["application/gameboy"] ->
+              Conn.send_resp(conn, 200, "<Text>Gameboy!</Text>")
+            _other ->
+              Conn.send_resp(conn, 406, "Not Acceptable")
+          end
       end
     end)
 
@@ -69,6 +76,29 @@ defmodule Crane.GRPC.WindowTest do
 
         assert length(response.history.stack) == 4
         assert response.history.index == 3
+      end)
+    end
+
+    test "will pass along headers", %{window: window} do
+      run_server(Server, fn port ->
+        {:ok, channel} = GRPC.Stub.connect("localhost:#{port}")
+
+        request =
+          %Protos.Browser.Request{
+            url: "https://dockyard.com/6",
+            window_name: Atom.to_string(window.name),
+            headers: [
+              %Protos.Browser.Header{
+                name: "Accept",
+                value: "application/gameboy"
+              }
+            ]
+          }
+
+        {:ok, response} = Client.visit(channel, request)
+
+        assert response.body == "<Text>Gameboy!</Text>"
+        assert response.status == 200
       end)
     end
   end

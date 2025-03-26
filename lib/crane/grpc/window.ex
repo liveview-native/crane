@@ -62,8 +62,12 @@ defmodule Crane.GRPC.Window do
     }
   end
 
-  defp to_request_opts(%Protos.Browser.Request{url: url, method: _method, headers: _headers}) do
-    [url: url]
+  defp to_request_opts(%Protos.Browser.Request{url: url, method: method, headers: headers}) do
+    [
+      url: url,
+      headers: Enum.map(headers, fn(header) -> {header.name, header.value} end),
+      method: method
+    ]
   end
 
   defp build_response(response, window) do
