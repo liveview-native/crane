@@ -10,10 +10,11 @@ defmodule Crane.GRPC.Socket do
     {:ok, socket} = WebSocket.get(request.socket_name)
     type = String.to_existing_atom(request.type)
     :ok = WebSocket.send(socket, {type, request.data})
+
+    %Protos.Empty{}
   end
 
   def receive(request, stream) do
-    IO.inspect(stream)
     {:ok, socket} = WebSocket.get(request.name)
 
     :ok = WebSocket.attach_receiver(socket, fn([{type, data}]) ->
@@ -22,10 +23,6 @@ defmodule Crane.GRPC.Socket do
         data: data
       }
 
-      receive do
-        {:EXIT, _pid, reason} ->
-          :ok
-      end
       GRPC.Server.send_reply(stream, msg)
     end)
 
@@ -36,7 +33,7 @@ defmodule Crane.GRPC.Socket do
     receive do
       :stop -> :ok
     after
-      1000 -> wait_forever()
+      10 -> wait_forever()
     end
   end
 

@@ -67,19 +67,29 @@ defmodule Crane.GRPC.SocketTest do
       run_server(Server, fn port ->
         {:ok, channel} = GRPC.Stub.connect("localhost:#{port}")
         {:ok, socket, _window} = Window.new_socket(window, url: "http://localhost:4567/websocket")
-        {:ok, resp} = Client.receive(channel, WebSocket.to_protoc(socket))
-          |> IO.inspect()
+        pid = self()
 
-        # GRPC.Stub.send_request(stream, WebSocket.to_protoc(socket))
-          # |> IO.inspect()
+        Task.async(fn ->
+          {:ok, stream} = Client.receive(channel, WebSocket.to_protoc(socket))
 
-        :ok = WebSocket.send(socket, {:text, "ping"})
+          Enum.each(stream, fn({:ok, message}) ->
+            Process.send(pid, {:message, message}, [])
+          end)
+        end)
 
-        # resp = GRPC.Stub.recv(stream)
+        Task.async(fn ->
+          :timer.sleep(50)
+          :ok = WebSocket.send(socket, {:text, "ping"})
+        end)
 
+        receive do
+          {:message, message} ->
+            assert message.type == "text"
+            assert message.data == "pong"
 
-        # require IEx
-        # IEx.pry()
+        after
+          500 -> assert false, "No messages received"
+        end
       end)
     end
   end
