@@ -58,6 +58,7 @@ defmodule Crane.Browser.Window do
           |> Req.new()
           |> HttpCookie.ReqPlugin.attach()
           |> Req.Request.merge_options([cookie_jar: browser.cookie_jar])
+          |> IO.inspect(label: "REQUEST")
           |> Req.run!()
 
         %{private: %{cookie_jar: cookie_jar}} = response
