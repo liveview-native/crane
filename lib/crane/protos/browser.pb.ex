@@ -24,8 +24,6 @@ defmodule Crane.Protos.BrowserService.Service do
 
   rpc :Get, Crane.Protos.Browser, Crane.Protos.Browser
 
-  rpc :NewWindow, Crane.Protos.Browser, Crane.Protos.Browser.Window
-
   rpc :CloseWindows, Crane.Protos.Browser, Crane.Protos.Empty
 end
 

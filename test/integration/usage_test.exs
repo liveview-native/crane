@@ -1,4 +1,4 @@
-defmodule Integration.UsageTest do
+defmodule Crane.Integration.UsageTest do
   use GRPC.Integration.TestCase
 
   alias Crane.GRPC.Browser, as: BrowserServer
@@ -28,13 +28,13 @@ defmodule Integration.UsageTest do
 
       {:ok, browser} = BrowserClient.get(channel, %Protos.Browser{headers: headers})
 
-      {:ok, window} = BrowserClient.new_window(channel, browser)
-
+      {:ok, window} = WindowClient.new(channel, %Protos.Browser.Window{browser_name: browser.name})
 
       request = %Protos.Browser.Request{
         url: "bad-uri",
         window_name: window.name
       }
+
       {:ok, response} = WindowClient.visit(channel, request)
 
       assert response.status == 400

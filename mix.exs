@@ -5,7 +5,7 @@ defmodule Crane.MixProject do
     [
       app: :crane,
       version: "0.1.0",
-      elixir: "~> 1.18",
+      elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -43,6 +43,7 @@ defmodule Crane.MixProject do
   defp deps do
     [
       {:req, "~> 0.5"},
+      {:phoenix_playground, "~> 0.1"},
       {:mint_web_socket, "~> 1.0.4"},
       {:floki, "~> 0.37"},
       {:websockex, "~> 0.4"},

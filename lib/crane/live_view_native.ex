@@ -5,7 +5,7 @@ defmodule Crane.LiveViewNative do
     []
   end
 
-  def call(request, stream, next, options) do
+  def call(request, stream, next, _options) do
     with {:ok, stream, %Response{status: 200, body: body} = response} <- next.(request, stream),
         {:ok, view_tree} <- LiveViewNative.Template.Parser.parse_document(body) do
 

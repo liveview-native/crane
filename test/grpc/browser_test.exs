@@ -22,14 +22,4 @@ defmodule Crane.GRPC.BrowserTest do
       end)
     end
   end
-
-  describe "new_window" do
-    test "will spawn a new window on the browser" do
-      run_server(Server, fn port ->
-        {:ok, channel} = GRPC.Stub.connect("localhost:#{port}")
-
-        {:ok, %Protos.Browser.Window{} = _window} = Client.new_window(channel, %Protos.Browser{})
-      end)
-    end
-  end
 end

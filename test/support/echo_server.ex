@@ -17,7 +17,7 @@ defmodule EchoPlug do
 
   get "/websocket" do
     conn
-    |> WebSockAdapter.upgrade(EchoServer, [], timeout: 60_000)
+    |> WebSockAdapter.upgrade(EchoServer, [], timeout: 60_000_000)
     |> halt()
   end
 

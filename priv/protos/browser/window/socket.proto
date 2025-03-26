@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "empty.proto";
+import "browser/header.proto";
 import "browser/window/socket/message.proto";
 import "elixirpb.proto";
 
@@ -8,12 +9,24 @@ option (elixirpb.file).module_prefix = "Crane.Protos.Browser.Window";
 option swift_prefix = "Crane";
 
 service SocketService {
+  rpc New(Socket) returns (Socket) {};
+
+    // gRPC does not support fire-and-forget
+    // endpoints. All endpoints are blocked
+    // on a response. But with sockets we want
+    // fire-and-forget. So any clients implementing this
+    // should spawn a new process to asynchronously run
+    // the send request to the server. The response is
+    // always `Empty` so there's no need to use it.
   rpc Send(Message) returns (Empty) {};
   rpc Receive(Socket) returns (stream Message) {};
 }
 
 message Socket {
   string name = 1;
+  string window_name = 2;
+  string url = 3;
+  repeated Header headers = 4;
 }
 
 

@@ -1,9 +1,21 @@
 defmodule Crane.GRPC.Window do
   use GRPC.Server, service: Crane.Protos.Browser.WindowService.Service
-  alias Crane.{Browser.Window, Browser.Window.History, Protos}
+  alias Crane.{
+    Browser,
+    Browser.Window,
+    Browser.Window.History,
+    Protos
+  }
+
+  def new(request, _stream) do
+    {:ok, browser} = Browser.get(%Browser{name: String.to_existing_atom(request.browser_name)})
+    {:ok, window} = Browser.new_window(%Window{browser_name: browser.name})
+
+    Window.to_proto(window)
+  end
 
   def visit(request, _stream) do
-    {:ok, window} = Window.get(String.to_existing_atom(request.window_name))
+    {:ok, window} = Window.get(request.window_name)
 
     {:ok, response, window} = Window.visit(window, to_request_opts(request))
 

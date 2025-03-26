@@ -3,18 +3,39 @@ defmodule Crane.Browser.Window.WebSocketTest do
   # alias Plug.Conn
 
   alias Crane.{
-    # Browser,
     Browser.Window,
     Browser.Window.WebSocket
   }
-
-  # import Crane.Test.Utils
 
   describe "new" do
     test "will connect to an existing websocket server" do
       {:ok, socket} = WebSocket.new(%Window{}, url: "http://localhost:4567/websocket")
 
+      pid = self()
+
+      receiver = fn(msg) ->
+        send(pid, msg)
+      end
+
+      :ok = WebSocket.attach_receiver(socket, receiver)
       WebSocket.send(socket, {:text, "ping"})
+
+      assert_receive [{:text, "pong"}]
+    end
+  end
+
+  describe "close" do
+    test "will close socket" do
+      {:ok, %WebSocket{name: name} = socket} = WebSocket.new(%Window{}, url: "http://localhost:4567/websocket")
+
+      pid = Process.whereis(name)
+      assert Process.alive?(pid)
+
+      WebSocket.close(socket)
+
+      :timer.sleep(100)
+
+      refute Process.alive?(pid)
     end
   end
 end
