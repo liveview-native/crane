@@ -26,7 +26,10 @@ defmodule Crane.GRPC.WindowTest do
         "https://dockyard.com/5" -> 
           Conn.send_resp(conn, 200, "<Text>#{:erlang.monotonic_time()}</Text>")
         "https://dockyard.com/6" ->
-          case Conn.get_req_header(conn, "accept") do
+          conn
+          |> Conn.get_req_header("accept")
+          |> Enum.uniq()
+          |> case do
             ["application/gameboy"] ->
               Conn.send_resp(conn, 200, "<Text>Gameboy!</Text>")
             _other ->

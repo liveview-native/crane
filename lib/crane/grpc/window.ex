@@ -7,6 +7,8 @@ defmodule Crane.GRPC.Window do
     Protos
   }
 
+  @allowed_methods ~w{GET HEAD POST PUT DELETE CONNECT OPTIONS TRACE PATCH}
+
   def new(request, _stream) do
     {:ok, browser} = Browser.get(%Browser{name: String.to_existing_atom(request.browser_name)})
     {:ok, window} = Browser.new_window(%Window{browser_name: browser.name})
@@ -62,12 +64,21 @@ defmodule Crane.GRPC.Window do
     }
   end
 
+  defp to_request_opts(%Protos.Browser.Request{method: method} = request) when method not in @allowed_methods,
+    do: to_request_opts(%Protos.Browser.Request{request | method: "GET"})
+
   defp to_request_opts(%Protos.Browser.Request{url: url, method: method, headers: headers}) do
     [
       url: url,
-      headers: Enum.map(headers, fn(header) -> {header.name, header.value} end),
+      headers: decode_headers(headers),
       method: method
     ]
+  end
+
+  defp decode_headers(headers) do
+    Enum.map(headers, fn
+      %Protos.Browser.Header{name: name, value: value} -> {name, value}
+    end)
   end
 
   defp build_response(response, window) do
