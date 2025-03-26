@@ -10,7 +10,6 @@ option swift_prefix = "Crane";
 
 service BrowserService {
   rpc Get(Browser) returns (Browser) {};
-  rpc NewWindow(Browser) returns (Window) {};
   rpc CloseWindows(Browser) returns (Empty) {};
 }
 

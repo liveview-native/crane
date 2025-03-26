@@ -2,23 +2,23 @@ syntax = "proto3";
 
 import "browser/request.proto";
 import "browser/response.proto";
-import "browser/window/socket.proto";
 import "elixirpb.proto";
 
 option (elixirpb.file).module_prefix = "Crane.Protos.Browser";
 option swift_prefix = "Crane";
 
 service WindowService {
+  rpc New(Window) returns (Window) {};
   rpc Visit(Request) returns (Response) {};
   rpc Fetch(Request) returns (Response) {};
   rpc Refresh(Window) returns (Response) {};
   rpc Forward(Window) returns (Response) {};
   rpc Back(Window) returns (Response) {};
   rpc Close(Window) returns (Window) {};
-  rpc NewSocket(Window) returns (Socket) {};
 }
 
 message Window {
   string name = 1;
+  string browser_name = 2;
 }
 

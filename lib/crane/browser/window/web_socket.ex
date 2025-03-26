@@ -1,7 +1,10 @@
 defmodule Crane.Browser.Window.WebSocket do
   use GenServer
 
-  alias Crane.Browser.Window
+  alias Crane.{
+    Protos,
+    Browser.Window
+  }
 
   import Crane.Utils, only: [
     generate_name: 1
@@ -28,7 +31,7 @@ defmodule Crane.Browser.Window.WebSocket do
     uri = URI.parse(opts[:url])
 
     scheme = String.to_atom(uri.scheme)
-  
+
     with {:ok, opts} = Keyword.validate(opts, [url: nil, headers: [], window_name: nil, name: nil]),
       {:ok, conn} <- Mint.HTTP1.connect(scheme, uri.host, uri.port),
       {:ok, conn, ref} <- Mint.WebSocket.upgrade(ws_scheme(scheme), conn, ws_path(uri.path), opts[:headers]),
@@ -65,7 +68,11 @@ defmodule Crane.Browser.Window.WebSocket do
     {:reply, {:ok, socket}, socket}
   end
 
-  def handle_call(msg, _from, socket) do
+  def handle_call({:attach_receiver, receiver}, _from, socket) when is_function(receiver) do
+    {:reply, :ok, %__MODULE__{socket | receiver: receiver}}
+  end
+
+  def handle_call(_msg, _from, socket) do
     {:noreply, socket}
   end
 
@@ -82,11 +89,7 @@ defmodule Crane.Browser.Window.WebSocket do
     {:stop, :normal, %__MODULE__{socket | conn: conn}}
   end
 
-  def handle_cast({:attach_receiver, stream}, socket) do
-    {:noreply, %__MODULE__{socket | receiver: stream}}
-  end
-
-  def handle_cast(msg, socket) do
+  def handle_cast(_msg, socket) do
     {:noreply, socket}
   end
 
@@ -95,7 +98,9 @@ defmodule Crane.Browser.Window.WebSocket do
     {:ok, websocket, msg} = Mint.WebSocket.decode(websocket, data)
 
     if receiver do
-      GRPC.Server.send_reply(receiver, msg)      
+      receiver.(msg)
+    else
+      IO.inspect(msg, label: "Unhandled message received")
     end
 
     {:noreply, %__MODULE__{socket | websocket: websocket, conn: conn}}
@@ -107,7 +112,7 @@ defmodule Crane.Browser.Window.WebSocket do
     {:stop, :normal, %__MODULE__{socket | conn: conn}}
   end
 
-  def handle_info(msg, socket) do
+  def handle_info(_msg, socket) do
     {:noreply, socket}
   end
 
@@ -125,6 +130,10 @@ defmodule Crane.Browser.Window.WebSocket do
     GenServer.cast(name, {:send, msg})
   end
 
+  def close(%__MODULE__{name: name}) do
+    GenServer.cast(name, :disconnect)
+  end
+
   def new(%Window{name: window_name}, options) when is_list(options) do
     with options <- Keyword.put(options, :window_name, window_name),
       {:ok, pid} <- start_link(options),
@@ -136,7 +145,24 @@ defmodule Crane.Browser.Window.WebSocket do
     end
   end
 
-  def attach_receiver(%__MODULE__{name: name}, stream) do
-    GenServer.cast(name, {:attach_receiver, stream})
+  def get(%__MODULE__{name: name}),
+    do: get(name)
+
+  def get(name) when is_binary(name),
+    do: get(String.to_existing_atom(name))
+
+  def get(name) when is_atom(name) do
+    GenServer.call(name, :get)
+  end
+
+  def attach_receiver(%__MODULE__{name: name}, receiver) when is_function(receiver) do
+    GenServer.call(name, {:attach_receiver, receiver})
+  end
+
+  def to_protoc(%__MODULE__{} = web_socket) do
+    %Protos.Browser.Window.Socket{
+      name: Atom.to_string(web_socket.name),
+      window_name: Atom.to_string(web_socket.window_name)
+    }
   end
 end

@@ -3,6 +3,8 @@ defmodule Crane.Browser do
   alias HttpCookie.Jar
   alias Crane.Protos
 
+  import Crane.Utils
+
   @default_headers [
     {"Accept-Encoding", "gzip, deflate, br, zstd"},
     {"Accept-Language", "en-US,en;q=0.5"},
@@ -27,7 +29,8 @@ defmodule Crane.Browser do
     Process.flag(:trap_exit, true)
 
     {:ok, %__MODULE__{
-      headers: @default_headers ++ headers
+      headers: @default_headers ++ headers,
+      name: generate_name(:browser)
     }}
   end
 
@@ -97,7 +100,7 @@ defmodule Crane.Browser do
     headers = Enum.map(headers, &to_proto(&1))
     windows  = Enum.into(windows, %{}, fn({name, window}) -> {Atom.to_string(name), Window.to_proto(window)} end)
 
-    %Protos.Browser{name: name, headers: headers, windows: windows}
+    %Protos.Browser{name: Atom.to_string(name), headers: headers, windows: windows}
   end
 
   def to_proto({name, %Window{} = window}) do

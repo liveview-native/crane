@@ -20,10 +20,12 @@ defmodule Crane.Browser.Window do
   def start_link(state) when is_map(state) do
     state =
       state
-      |> Map.put_new_lazy(:name, fn ->
-        generate_name(:window)
+      |> Map.get_and_update(:name, fn
+        invalid when invalid in ["", nil]-> {invalid, generate_name(:window)}
+        name -> {name, name}
       end)
-      |> Map.take([:history, :name, :response, :view_tree])
+      |> elem(1)
+      |> Map.take([:history, :name, :response, :view_tree, :browser_name])
 
     GenServer.start_link(__MODULE__, state, name: state.name)
   end
@@ -37,6 +39,11 @@ defmodule Crane.Browser.Window do
   @impl true
   def handle_call(:get, _from, window),
     do: {:reply, {:ok, window}, window}
+
+  def handle_call({:monitor, pid}, _from, window) do
+    Process.monitor(pid)
+    {:reply, window, window}
+  end
 
   def handle_call({:fetch, options}, _from, window) do
     options
@@ -107,15 +114,24 @@ defmodule Crane.Browser.Window do
 
   def handle_call({:new_socket, options}, _from, %__MODULE__{sockets: sockets, refs: refs} = window) do
     with {:ok, options} <- Keyword.validate(options, [url: nil, headers: [], window_name: nil]),
+      {_, options} <- normalize_options(options),
     {:ok, socket} <- WebSocket.new(window, options),
     {sockets, refs} <- monitor_socket(socket, sockets, refs) do
-      {:reply, {:ok, socket}, %__MODULE__{window | sockets: sockets, refs: refs}}
+      window = %__MODULE__{window | sockets: sockets, refs: refs}
+      {:reply, {:ok, socket, window}, window}
     else
       {:error, error} ->
         {:reply, error, window}
       error ->
         {:reply, error, window}
     end
+  end
+
+  defp normalize_options(options) do
+    Keyword.get_and_update(options, :url, fn 
+     "localhost" <> _tail = url -> {url, "http://" <> url}
+      url -> {url, url}
+    end)
   end
 
   defp monitor_socket(socket, sockets, refs) do
@@ -129,18 +145,20 @@ defmodule Crane.Browser.Window do
 
   @impl true
   def handle_info({:DOWN, ref, :process, _pid, _reason}, %{refs: refs} = window) do
-    {{type, name}, refs} = Map.pop(refs, ref)
+    case Map.pop(refs, ref) do
+      {nil, _refs} ->
+        {:noreply, window}
+      {{type, name}, refs} -> 
+        resources = Map.get(window, type)
+        resources = Map.delete(resources, name)
+        window = Map.put(window, type, resources)
 
-    resources = Map.get(window, type)
-    resources = Map.delete(resources, name)
-    window = Map.put(window, type, resources)
-
-    {:noreply, %__MODULE__{window | refs: refs}}
+        {:noreply, %__MODULE__{window | refs: refs}}
+    end
   end
 
-  def handle_info(msg, window) do
-    IO.inspect(msg, label: "Unhandled Info")
-    {:noreply, window}
+  def handle_info(_msg, state) do
+    {:noreply, state}
   end
 
   def new(state \\ %{}) when is_map(state) do

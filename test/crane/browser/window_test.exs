@@ -2,7 +2,11 @@ defmodule Crane.Browser.WindowTest do
   use ExUnit.Case
   alias Plug.Conn
 
-  alias Crane.{Browser, Browser.Window}
+  alias Crane.{
+    Browser,
+    Browser.Window,
+    Browser.Window.WebSocket
+  }
 
   import Crane.Test.Utils
 
@@ -142,7 +146,6 @@ defmodule Crane.Browser.WindowTest do
 
     test "will navigate history", %{window: window} do
       {:ok, _response, window} = Window.back(window)
-      # IO.inspect(window)
       assert window.response.body == "<Text>4</Text>"
       {:ok, _response, window} = Window.back(window)
       assert window.response.body == "<Text>3</Text>"
@@ -185,9 +188,36 @@ defmodule Crane.Browser.WindowTest do
     end
   end
 
-  # describe "sockets" do
-  #   test "create a new socket", %{window: window} do
-  #     {:ok, socket, window} = Window.create_socket(window, url: "https://dockyard.com")
-  #   end
-  # end
+  describe "sockets" do
+    setup do
+      {:ok, pid} = Window.start_link(%{})
+
+      {:ok, window} = GenServer.call(pid, :get)
+
+      {:ok, window: window}
+    end
+
+    test "create a new socket", %{window: window} do
+      {:ok, %WebSocket{name: socket_name} = socket, window} = Window.new_socket(window, url: "http://localhost:4567/websocket")
+
+      pid = Process.whereis(socket_name)
+      assert Process.alive?(pid)
+      assert window.sockets[socket_name] == socket
+    end
+
+    test "when socket is closed window updates", %{window: window} do
+      {:ok, %WebSocket{name: socket_name} = socket, window} = Window.new_socket(window, url: "http://localhost:4567/websocket")
+
+      assert window.sockets[socket_name] == socket
+
+      pid = Process.whereis(socket_name)
+      Process.exit(pid, :kill)
+
+      :timer.sleep(100)
+
+      {:ok, window} = Window.get(window)
+      assert window.sockets == %{}
+      assert window.refs == %{}
+    end
+  end
 end

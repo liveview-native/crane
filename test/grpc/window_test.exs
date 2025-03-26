@@ -6,6 +6,7 @@ defmodule Crane.GRPC.WindowTest do
   alias Crane.Protos.Browser.WindowService.Stub, as: Client
   alias Crane.Protos
   alias Plug.Conn
+
   import Crane.Test.Utils
 
   setup do
@@ -34,6 +35,20 @@ defmodule Crane.GRPC.WindowTest do
     {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/3")
 
     {:ok, window: window}
+  end
+
+  describe "new" do
+    test "will spawn a new window on the browser" do
+      run_server(Server, fn port ->
+        {:ok, channel} = GRPC.Stub.connect("localhost:#{port}")
+
+        request = %Protos.Browser.Window{}
+
+        {:ok, %Protos.Browser.Window{} = window} = Client.new(channel, request)
+
+        refute request == window
+      end)
+    end
   end
 
   describe "visit" do
