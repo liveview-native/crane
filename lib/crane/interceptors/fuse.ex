@@ -1,4 +1,4 @@
-defmodule Crane.LiveViewNative do
+defmodule Crane.Interceptors.Fuse do
   alias Crane.Protos.Browser.Response
 
   def init(_) do
@@ -12,7 +12,7 @@ defmodule Crane.LiveViewNative do
         stylesheets = Floki.find(view_tree, "Style") |> Floki.attribute("url")
 
         view_trees = %{
-          "main" => to_proto(view_tree, "[data-phx-main] > *"),
+          "body" => to_proto(view_tree, "body"),
           "disconnected" => lifecycle_template(view_tree, "disconnected"),
           "reconnecting" => lifecycle_template(view_tree, "reconnecting"),
           "error" => lifecycle_template(view_tree, "error")
@@ -38,3 +38,4 @@ defmodule Crane.LiveViewNative do
     to_proto(view_tree, ~s'head [template="#{type}"')
   end
 end
+
