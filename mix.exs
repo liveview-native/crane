@@ -57,7 +57,7 @@ defmodule Crane.MixProject do
       {:bandit, "~> 1.0"},
       {:cdpotion, "~> 0.1.0"},
 
-      {:elixir_kit, path: "/Users/carson.katri/Documents/LiveViewNative/Experiments/ElixirKit/elixir_kit", only: :dev}
+      {:elixirkit, git: "https://github.com/liveview-native/elixirkit.git", branch: "main", only: :dev}
     ]
   end
 end

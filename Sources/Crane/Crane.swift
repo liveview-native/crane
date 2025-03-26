@@ -69,14 +69,20 @@ public final class Crane: @unchecked Sendable {
     
     @discardableResult
     public func newWindow(url: URL) async throws -> Window {
-        let url = (URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.contains(where: { $0.name == "_format" }) ?? false)
-            ? url
-            : url.appending(queryItems: [.init(name: "_format", value: "swiftui")])
+        let craneWindow = try await windowService.new(CraneWindow())
         
-        let craneWindow = try await browserService.newWindow(CraneBrowser())
         var request = CraneRequest()
         request.url = url.absoluteString
         request.windowName = craneWindow.name
+        request.method = "GET"
+        
+        var header = CraneHeader()
+        header.name = "Accept"
+        header.value = "application/swiftui"
+        request.headers = [
+            header
+        ]
+        
         let response = try await windowService.visit(request)
         let document = response.viewTrees["main"]!
         let window = Window(
@@ -107,13 +113,18 @@ public final class Crane: @unchecked Sendable {
     
     @discardableResult
     public func navigate(window: Window, to url: URL) async throws -> Window {
-        let url = (URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.contains(where: { $0.name == "_format" }) ?? false)
-            ? url
-            : url.appending(queryItems: [.init(name: "_format", value: "swiftui")])
-        
         var request = CraneRequest()
         request.url = url.absoluteString
         request.windowName = window.window.name
+        request.method = "GET"
+        
+        var header = CraneHeader()
+        header.name = "Accept"
+        header.value = "application/swiftui"
+        request.headers = [
+            header
+        ]
+        
         let response = try await windowService.visit(request)
         let document = response.viewTrees["main"]!
         window.url = url
@@ -158,31 +169,6 @@ public final class Crane: @unchecked Sendable {
         runloop?.cancel()
     }
 }
-
-// @main
-// struct Crane: AsyncParsableCommand {
-//     @Option
-//     private var url: String
-
-//     func run() async throws {
-//         try await withGRPCClient(
-//             transport: .http2NIOPosix(
-//                 target: .ipv4(host: "127.0.0.1", port: 50051),
-//                 transportSecurity: .plaintext
-//             )
-//         ) { client in
-//             let browser = CraneBrowserService.Client(wrapping: client)
-//             let window = try await browser.newWindow(CraneBrowser())
-//             let windowService = CraneWindowService.Client(wrapping: client)
-//             var request = CraneRequest()
-//             request.url = url
-//             request.windowName = window.name
-//             let response = try await windowService.visit(request)
-//             let root = response.viewTrees["main"]!
-//             let document = GRPCDocument(rootNode: root)
-//         }
-//     }
-// }
 
 final class CraneNodeRef: LiveViewNativeCore.NodeRef {
     let value: Int32
