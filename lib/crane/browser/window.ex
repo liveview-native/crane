@@ -54,6 +54,7 @@ defmodule Crane.Browser.Window do
         {_request, response} =
           options
           |> Keyword.put(:headers, browser.headers ++ options[:headers])
+          |> IO.inspect(label: "OPTIONS")
           |> Keyword.merge(Application.get_env(:crane, :fetch_req_options, []))
           |> Req.new()
           |> HttpCookie.ReqPlugin.attach()
