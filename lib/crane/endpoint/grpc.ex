@@ -3,6 +3,6 @@ defmodule Crane.Endpoint.GRPC do
 
   intercept GRPC.Server.Interceptors.Logger
   run Crane.GRPC.Browser
-  run Crane.GRPC.Window, interceptors: [Crane.LiveViewNative]
+  run Crane.GRPC.Window, interceptors: [Crane.Interceptors.Fuse]
   run Crane.GRPC.Socket
 end
