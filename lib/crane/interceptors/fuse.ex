@@ -12,7 +12,7 @@ defmodule Crane.Interceptors.Fuse do
         stylesheets = Floki.find(view_tree, "Style") |> Floki.attribute("url")
 
         view_trees = %{
-          "body" => to_proto(view_tree, "body"),
+          "body" => to_proto(view_tree, "body > *"),
           "disconnected" => lifecycle_template(view_tree, "disconnected"),
           "reconnecting" => lifecycle_template(view_tree, "reconnecting"),
           "error" => lifecycle_template(view_tree, "error")
