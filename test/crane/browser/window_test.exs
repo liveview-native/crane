@@ -10,6 +10,16 @@ defmodule Crane.Browser.WindowTest do
 
   import Crane.Test.Utils
 
+  setup do
+    {:ok, browser_pid} = Browser.start_link([])
+
+    on_exit fn ->
+      Process.exit(browser_pid, :normal)
+    end
+
+    :ok
+  end
+
   describe "new" do
     test "will spawn a new Window process" do
       {:ok, %Window{name: name}} = Window.new()
@@ -74,8 +84,13 @@ defmodule Crane.Browser.WindowTest do
 
   describe "fetch" do
     setup do
-      {:ok, pid} = Window.start_link(%{})
-      {:ok, window} = GenServer.call(pid, :get)
+      {:ok, window_pid} = Window.start_link(%{})
+      {:ok, window} = GenServer.call(window_pid, :get)
+
+      on_exit fn ->
+        Process.exit(window_pid, :normal)
+      end
+
       {:ok, window: window}
     end
 
@@ -115,8 +130,8 @@ defmodule Crane.Browser.WindowTest do
 
   describe "forward/back/go" do
     setup do
-      {:ok, pid} = Window.start_link(%{})
-      {:ok, window} = GenServer.call(pid, :get)
+      {:ok, window_pid} = Window.start_link(%{})
+      {:ok, window} = GenServer.call(window_pid, :get)
       
       Req.Test.stub(Window, fn(conn) ->
         case Conn.request_url(conn) do
@@ -140,6 +155,10 @@ defmodule Crane.Browser.WindowTest do
       {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/3")
       {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/4")
       {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/5")
+
+      on_exit fn ->
+        Process.exit(window_pid, :normal)
+      end
 
       {:ok, window: window}
     end
@@ -191,33 +210,36 @@ defmodule Crane.Browser.WindowTest do
   describe "sockets" do
     setup do
       {:ok, pid} = Window.start_link(%{})
-
       {:ok, window} = GenServer.call(pid, :get)
-
       {:ok, window: window}
     end
 
-    test "create a new socket", %{window: window} do
-      {:ok, %WebSocket{name: socket_name} = socket, window} = Window.new_socket(window, url: "http://localhost:4567/websocket")
+    test "will return all socket names", %{window: window} do
+      {:ok, %WebSocket{} = socket_1, window} = Window.new_socket(window, url: "http://localhost:4567/websocket")
+      {:ok, %WebSocket{} = socket_2, window} = Window.new_socket(window, url: "http://localhost:4567/websocket")
 
-      pid = Process.whereis(socket_name)
-      assert Process.alive?(pid)
-      assert window.sockets[socket_name] == socket
+      {:ok, sockets} = Window.sockets(window) 
+
+      assert socket_1 in sockets
+      assert socket_2 in sockets
     end
 
-    test "when socket is closed window updates", %{window: window} do
-      {:ok, %WebSocket{name: socket_name} = socket, window} = Window.new_socket(window, url: "http://localhost:4567/websocket")
+    test "will spawn a new socket for the window that is monitored by the window", %{window: window} do
+      {:ok, %WebSocket{} = socket, window} = Window.new_socket(window, url: "http://localhost:4567/websocket")
+      {:ok, window} = Window.get(window)
 
-      assert window.sockets[socket_name] == socket
+      socket_name = Atom.to_string(socket.name)
 
-      pid = Process.whereis(socket_name)
+      assert socket_name in Map.values(window.refs)
+
+      pid = Process.whereis(socket.name)
       Process.exit(pid, :kill)
 
-      :timer.sleep(100)
+      :timer.sleep(10)
 
       {:ok, window} = Window.get(window)
-      assert window.sockets == %{}
-      assert window.refs == %{}
+
+      refute socket_name in Map.values(window.refs)
     end
   end
 end

@@ -3,7 +3,15 @@ defmodule Crane.BrowserTest do
 
   alias Crane.{Browser, Browser.Window}
 
-  import Crane.Test.Utils
+  setup do
+    {:ok, browser_pid} = Browser.start_link([])
+
+    on_exit fn ->
+      Process.exit(browser_pid, :normal)
+    end
+
+    :ok
+  end
 
   describe "get" do
     test "will return the browser struct" do
@@ -22,38 +30,33 @@ defmodule Crane.BrowserTest do
     end
   end
 
-  describe "new_window" do
-    test "will spawn a new window for the browsesr that is monitored by the browser" do
-      {:ok, %Window{} = window} = Browser.new_window()
+  describe "windows" do
+    test "will return all window names" do
+      {:ok, %Window{} = window_1, browser} = Browser.new_window(%Browser{})
+      {:ok, %Window{} = window_2, browser} = Browser.new_window(browser)
 
-      {:ok, %Browser{} = browser} = Browser.get()
+      {:ok, windows} = Browser.windows(browser)
 
-      assert browser.windows[window.name] == window
-      assert window.history.index == -1
+      assert window_1 in windows
+      assert window_2 in windows
     end
 
-    test "with initial state will create new window with that state" do
-      {:ok, window} = Window.new()
-      
-      Req.Test.stub(Window, fn(conn) ->
-        Plug.Conn.send_resp(conn, conn.status || 200, "<Text>Success!</Text>")
-      end)
+    test "will spawn a new window for the browser that is monitored by the browser" do
+      {:ok, %Window{} = window, browser} = Browser.new_window(%Browser{})
 
-      Req.Test.allow(Window, self(), pid_for(window))
+      window_name = Atom.to_string(window.name)
 
-      {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com")
-      old_pid = Process.whereis(window.name)
+      assert window_name in Map.values(browser.refs)
+      assert window.history.index == -1
 
-      :ok = Window.close(window)
+      pid = Process.whereis(window.name)
+      Process.exit(pid, :kill)
 
-      {:ok, restored_window} = Window.new(window)
+      :timer.sleep(10)
 
-      assert window.name == restored_window.name
-      assert window.history == restored_window.history
-      assert window.response == restored_window.response
-      assert window.view_tree == restored_window.view_tree
+      {:ok, browser} = Browser.get()
 
-      refute old_pid == Process.whereis(restored_window.name)
+      refute window_name in Map.values(browser.refs)
     end
   end
 end

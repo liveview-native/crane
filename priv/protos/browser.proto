@@ -1,7 +1,6 @@
 syntax = "proto3";
 
 import "empty.proto";
-import "browser/window.proto";
 import "browser/header.proto";
 import "elixirpb.proto";
 
@@ -15,7 +14,7 @@ service BrowserService {
 
 message Browser {
   string name = 1;
-  map<string, Window> windows = 2;
+  repeated string windows = 2;
   repeated Header headers = 3;
 }
 

@@ -5,16 +5,13 @@ defmodule Crane.Browser.Window do
   alias Crane.Browser.Window.{History, ViewTree, WebSocket}
   alias Crane.Protos
 
-  import Crane.Utils, only: [
-    generate_name: 1
-  ]
+  import Crane.Utils
 
-  defstruct history: %History{},
+  defstruct name: nil,
+    history: %History{},
     browser_name: nil,
     view_tree: %ViewTree{},
     response: nil,
-    name: nil,
-    sockets: %{},
     refs: %{}
 
   def start_link(state) when is_map(state) do
@@ -112,12 +109,12 @@ defmodule Crane.Browser.Window do
     end
   end
 
-  def handle_call({:new_socket, options}, _from, %__MODULE__{sockets: sockets, refs: refs} = window) do
+  def handle_call({:new_socket, options}, _from, %__MODULE__{refs: refs} = window) do
     with {:ok, options} <- Keyword.validate(options, [url: nil, headers: [], window_name: nil]),
       {_, options} <- normalize_options(options),
     {:ok, socket} <- WebSocket.new(window, options),
-    {sockets, refs} <- monitor_socket(socket, sockets, refs) do
-      window = %__MODULE__{window | sockets: sockets, refs: refs}
+    refs <- monitor(socket, refs) do
+      window = %__MODULE__{window | refs: refs}
       {:reply, {:ok, socket, window}, window}
     else
       {:error, error} ->
@@ -127,6 +124,17 @@ defmodule Crane.Browser.Window do
     end
   end
 
+  def handle_call(:sockets, _from, %__MODULE__{refs: refs} = window) do
+    sockets = Enum.reduce(refs, [], fn
+      {_ref, "socket-" <> _id = name}, acc ->
+        {:ok, socket} = Crane.Browser.Window.WebSocket.get(%Crane.Browser.Window.WebSocket{name: name})
+        [socket | acc]
+      _other, acc -> acc
+    end)
+
+    {:reply, {:ok, sockets}, window}
+  end
+
   defp normalize_options(options) do
     Keyword.get_and_update(options, :url, fn 
      "localhost" <> _tail = url -> {url, "http://" <> url}
@@ -134,25 +142,12 @@ defmodule Crane.Browser.Window do
     end)
   end
 
-  defp monitor_socket(socket, sockets, refs) do
-    pid = Process.whereis(socket.name)
-    ref = Process.monitor(pid)
-    sockets = Map.put(sockets, socket.name, socket)
-    refs = Map.put(refs, ref, {:sockets, socket.name})
-
-    {sockets, refs}
-  end
-
   @impl true
   def handle_info({:DOWN, ref, :process, _pid, _reason}, %{refs: refs} = window) do
     case Map.pop(refs, ref) do
       {nil, _refs} ->
         {:noreply, window}
-      {{type, name}, refs} -> 
-        resources = Map.get(window, type)
-        resources = Map.delete(resources, name)
-        window = Map.put(window, type, resources)
-
+      {_name, refs} -> 
         {:noreply, %__MODULE__{window | refs: refs}}
     end
   end
@@ -209,7 +204,14 @@ defmodule Crane.Browser.Window do
     GenServer.call(name, {:new_socket, options})
   end
 
-  def to_proto(%__MODULE__{name: name}) do
-    %Protos.Browser.Window{name: Atom.to_string(name)}
+  def sockets(%__MODULE__{name: name}) do
+    GenServer.call(name, :sockets)
+  end
+
+  def to_proto(%__MODULE__{name: name, refs: refs}) do
+    %Protos.Browser.Window{
+      name: Atom.to_string(name),
+      sockets: get_reference_names(refs, :socket)
+    }
   end
 end

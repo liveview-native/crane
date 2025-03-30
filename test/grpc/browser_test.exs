@@ -5,8 +5,18 @@ defmodule Crane.GRPC.BrowserTest do
   alias Crane.Protos.BrowserService.Stub, as: Client
   alias Crane.Protos
 
+  setup do
+    {:ok, browser_pid} = Crane.Browser.start_link([])
+
+    on_exit fn ->
+      Process.exit(browser_pid, :normal)
+    end
+
+    :ok
+  end
+
   describe "get" do
-    test "will get a the Browser struct" do
+    test "will get the Browser struct" do
       run_server(Server, fn port ->
         {:ok, channel} = GRPC.Stub.connect("localhost:#{port}")
 

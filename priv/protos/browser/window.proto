@@ -20,5 +20,6 @@ service WindowService {
 message Window {
   string name = 1;
   string browser_name = 2;
+  repeated string sockets = 3;
 }
 

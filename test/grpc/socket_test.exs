@@ -10,8 +10,12 @@ defmodule Crane.GRPC.SocketTest do
   alias Crane.Protos
 
   setup do
-    {:ok, pid} = Window.start_link(%{})
-    {:ok, window} = GenServer.call(pid, :get)
+    {:ok, window_pid} = Window.start_link(%{})
+    {:ok, window} = GenServer.call(window_pid, :get)
+
+    on_exit fn ->
+      Process.exit(window_pid, :normal)
+    end
 
     {:ok, window: window}
   end
@@ -72,9 +76,8 @@ defmodule Crane.GRPC.SocketTest do
         Task.async(fn ->
           {:ok, stream} = Client.receive(channel, WebSocket.to_protoc(socket))
 
-          Enum.each(stream, fn({:ok, message}) ->
-            Process.send(pid, {:message, message}, [])
-          end)
+          [{:ok, message}] = Stream.take(stream, 1) |> Enum.to_list()
+          send(pid, {:message, message})
         end)
 
         Task.async(fn ->
@@ -82,14 +85,17 @@ defmodule Crane.GRPC.SocketTest do
           :ok = WebSocket.send(socket, {:text, "ping"})
         end)
 
-        receive do
-          {:message, message} ->
-            assert message.type == "text"
-            assert message.data == "pong"
+        message = receive do
+          {:message, message} -> message
 
         after
           500 -> assert false, "No messages received"
         end
+
+        assert message.type == "text"
+        assert message.data == "pong"
+
+        send(:"#{socket.name}-receive", :stop)
       end)
     end
   end

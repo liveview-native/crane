@@ -10,8 +10,9 @@ defmodule Crane.GRPC.WindowTest do
   import Crane.Test.Utils
 
   setup do
-    {:ok, pid} = Window.start_link(%{})
-    {:ok, window} = GenServer.call(pid, :get)
+    {:ok, browser_pid} = Crane.Browser.start_link([])
+    {:ok, window_pid} = Window.start_link(%{})
+    {:ok, window} = GenServer.call(window_pid, :get)
     
     Req.Test.stub(Window, fn(conn) ->
       case Conn.request_url(conn) do
@@ -43,6 +44,11 @@ defmodule Crane.GRPC.WindowTest do
     {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/1")
     {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/2")
     {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/3")
+
+    on_exit fn ->
+      Process.exit(browser_pid, :normal)
+      Process.exit(window_pid, :normal)
+    end
 
     {:ok, window: window}
   end

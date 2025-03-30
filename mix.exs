@@ -24,7 +24,6 @@ defmodule Crane.MixProject do
 
   def application do
     [
-      mod: {Crane.Application, []},
       extra_applications: [:logger]
     ]
   end
@@ -43,8 +42,9 @@ defmodule Crane.MixProject do
   defp deps do
     [
       {:req, "~> 0.5"},
-      {:phoenix_playground, "~> 0.1"},
+      {:phoenix_playground, "~> 0.1",},
       {:mint_web_socket, "~> 1.0.4"},
+      {:flame_on, path: "../flame_on"},
       {:floki, "~> 0.37"},
       {:websockex, "~> 0.4"},
       {:http_cookie, "~> 0.7"},

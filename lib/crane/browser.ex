@@ -14,8 +14,7 @@ defmodule Crane.Browser do
 
   alias Crane.Browser.Window
 
-  defstruct windows: %{},
-    name: nil,
+  defstruct name: nil,
     refs: %{},
     headers: [],
     cookie_jar: Jar.new()
@@ -39,18 +38,30 @@ defmodule Crane.Browser do
     {:reply, {:ok, browser}, browser}
   end
 
-  def handle_call({:new_window, window_state}, _from, %{windows: windows, refs: refs} = browser) do
-    with {:ok, window} <- Window.new(window_state),
-      {windows, refs} <- monitor_window(window, windows, refs) do
+  def handle_call(:windows, _from, %__MODULE__{refs: refs} = browser) do
+    windows = Enum.reduce(refs, [], fn
+      {_ref, "window-" <> _id = name}, acc ->
+        {:ok, window} = Crane.Browser.Window.get(name)
+        [window | acc]
+      _other, acc -> acc
+    end)
 
-      {:reply, {:ok, window}, %__MODULE__{browser | windows: windows, refs: refs}}
+    {:reply, {:ok, windows}, browser}
+  end
+
+  def handle_call({:new_window, window_state}, _from, %{refs: refs} = browser) do
+    with {:ok, window} <- Window.new(window_state),
+      refs <- monitor(window, refs) do
+
+      browser = %__MODULE__{browser | refs: refs}
+
+      {:reply, {:ok, window, browser}, browser}
     else
       error -> {:reply, error, browser}
     end
   end
 
-  def handle_call(msg, _from, browser) do
-    IO.inspect(msg, label: "Unhandled Call")
+  def handle_call(_msg, _from, browser) do
     {:noreply, browser}
   end
 
@@ -58,29 +69,17 @@ defmodule Crane.Browser do
     {:noreply, %__MODULE__{browser | cookie_jar: cookie_jar}}
   end
 
-  def handle_cast(msg, browser) do
-    IO.inspect(msg, label: "Unhandled Cast")
+  def handle_cast(_msg, browser) do
     {:noreply, browser}
   end
 
-  defp monitor_window(window, windows, refs) do
-    pid = Process.whereis(window.name)
-    ref = Process.monitor(pid)
-    windows = Map.put(windows, window.name, window)
-    refs = Map.put(refs, ref, window.name)
+  def handle_info({:DOWN, ref, :process, _pid, _reason}, %{refs: refs} = browser) do
+    {_name, refs} = Map.pop(refs, ref)
 
-    {windows, refs}
+    {:noreply, %__MODULE__{browser | refs: refs}}
   end
 
-  def handle_info({:DOWN, ref, :process, _pid, _reason}, %{windows: windows, refs: refs} = browser) do
-    {name, refs} = Map.pop(refs, ref)
-    windows = Map.delete(windows, name)
-
-    {:noreply, %__MODULE__{browser | windows: windows, refs: refs}}
-  end
-
-  def handle_info(msg, browser) do
-    IO.inspect(msg, label: "Unhandled Info")
+  def handle_info(_msg, browser) do
     {:noreply, browser}
   end
 
@@ -88,7 +87,11 @@ defmodule Crane.Browser do
     GenServer.cast(__MODULE__, {:update_cookie_jar, cookie_jar})
   end
 
-  def new_window(window_state \\ %{}) when is_map(window_state) do
+  def windows(%__MODULE__{name: _name}) do
+    GenServer.call(__MODULE__, :windows)
+  end
+
+  def new_window(%__MODULE__{name: _name}, window_state \\ %{}) when is_map(window_state) do
     GenServer.call(__MODULE__, {:new_window, Map.put(window_state, :browser_name, __MODULE__)})
   end
 
@@ -96,9 +99,9 @@ defmodule Crane.Browser do
     GenServer.call(__MODULE__, {:get, browser})
   end
 
-  def to_proto(%__MODULE__{name: name, headers: headers, windows: windows} = _browser) do
+  def to_proto(%__MODULE__{name: name, headers: headers, refs: refs} = _browser) do
     headers = Enum.map(headers, &to_proto(&1))
-    windows  = Enum.into(windows, %{}, fn({name, window}) -> {Atom.to_string(name), Window.to_proto(window)} end)
+    windows = get_reference_names(refs, :window)
 
     %Protos.Browser{name: Atom.to_string(name), headers: headers, windows: windows}
   end
