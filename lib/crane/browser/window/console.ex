@@ -1,8 +1,6 @@
 defmodule Crane.Browser.Window.Console do
   use GenServer
 
-  @topic "logger"
-
   import Crane.Utils
 
   defstruct logs: %{},

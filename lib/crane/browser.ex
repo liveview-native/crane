@@ -49,12 +49,13 @@ defmodule Crane.Browser do
     {:reply, {:ok, windows}, browser}
   end
 
-  def handle_call({:new_window, window_state}, _from, %{refs: refs} = browser) do
+  def handle_call({:new_window, window_state}, _from, %__MODULE__{name: name, refs: refs} = browser) do
     with {:ok, window} <- Window.new(window_state),
       refs <- monitor(window, refs) do
 
       browser = %__MODULE__{browser | refs: refs}
 
+      Phoenix.PubSub.broadcast(PhoenixPlayground.PubSub, Atom.to_string(name), :update)
       {:reply, {:ok, window, browser}, browser}
     else
       error -> {:reply, error, browser}
@@ -65,7 +66,8 @@ defmodule Crane.Browser do
     {:noreply, browser}
   end
 
-  def handle_cast({:update_cookie_jar, cookie_jar}, browser) do
+  def handle_cast({:update_cookie_jar, cookie_jar}, %__MODULE__{name: name} = browser) do
+    Phoenix.PubSub.broadcast(PhoenixPlayground.PubSub, Atom.to_string(name), :update)
     {:noreply, %__MODULE__{browser | cookie_jar: cookie_jar}}
   end
 
@@ -73,9 +75,10 @@ defmodule Crane.Browser do
     {:noreply, browser}
   end
 
-  def handle_info({:DOWN, ref, :process, _pid, _reason}, %{refs: refs} = browser) do
+  def handle_info({:DOWN, ref, :process, _pid, _reason}, %__MODULE__{name: name, refs: refs} = browser) do
     {_name, refs} = Map.pop(refs, ref)
 
+    Phoenix.PubSub.broadcast(PhoenixPlayground.PubSub, Atom.to_string(name), :update)
     {:noreply, %__MODULE__{browser | refs: refs}}
   end
 
@@ -89,6 +92,11 @@ defmodule Crane.Browser do
 
   def windows(%__MODULE__{name: _name}) do
     GenServer.call(__MODULE__, :windows)
+  end
+
+  def windows!(browser) do
+    {:ok, windows} = windows(browser)
+    windows
   end
 
   def new_window(%__MODULE__{name: _name}, window_state \\ %{}) when is_map(window_state) do

@@ -42,7 +42,7 @@ defmodule Crane.Browser.Window do
     {:reply, window, window}
   end
 
-  def handle_call({:fetch, options}, _from, window) do
+  def handle_call({:fetch, options}, _from, %__MODULE__{name: name} = window) do
     options
     |> Keyword.validate([url: nil, method: "GET", headers: [], body: nil])
     |> case do
@@ -61,6 +61,7 @@ defmodule Crane.Browser.Window do
 
         :ok = Browser.update_cookie_jar(cookie_jar)
 
+        Phoenix.PubSub.broadcast(PhoenixPlayground.PubSub, Atom.to_string(name), :update)
         {:reply, {:ok, response, window}, window}
 
       {:error, invalid_options} ->
@@ -109,13 +110,15 @@ defmodule Crane.Browser.Window do
     end
   end
 
-  def handle_call({:new_socket, options}, _from, %__MODULE__{refs: refs} = window) do
+  def handle_call({:new_socket, options}, _from, %__MODULE__{name: name, refs: refs} = window) do
     with {:ok, options} <- Keyword.validate(options, [url: nil, headers: [], window_name: nil]),
       {_, options} <- normalize_options(options),
-    {:ok, socket} <- WebSocket.new(window, options),
-    refs <- monitor(socket, refs) do
-      window = %__MODULE__{window | refs: refs}
-      {:reply, {:ok, socket, window}, window}
+      {:ok, socket} <- WebSocket.new(window, options) do
+        refs = monitor(socket, refs)
+        window = %__MODULE__{window | refs: refs}
+        Phoenix.PubSub.broadcast(PhoenixPlayground.PubSub, Atom.to_string(name), :update)
+
+        {:reply, {:ok, socket, window}, window}
     else
       {:error, error} ->
         {:reply, error, window}
@@ -127,7 +130,7 @@ defmodule Crane.Browser.Window do
   def handle_call(:sockets, _from, %__MODULE__{refs: refs} = window) do
     sockets = Enum.reduce(refs, [], fn
       {_ref, "socket-" <> _id = name}, acc ->
-        {:ok, socket} = Crane.Browser.Window.WebSocket.get(%Crane.Browser.Window.WebSocket{name: name})
+        {:ok, socket} = Crane.Browser.Window.WebSocket.get(name)
         [socket | acc]
       _other, acc -> acc
     end)
@@ -143,11 +146,12 @@ defmodule Crane.Browser.Window do
   end
 
   @impl true
-  def handle_info({:DOWN, ref, :process, _pid, _reason}, %{refs: refs} = window) do
+  def handle_info({:DOWN, ref, :process, _pid, _reason}, %__MODULE__{name: name, refs: refs} = window) do
     case Map.pop(refs, ref) do
       {nil, _refs} ->
         {:noreply, window}
       {_name, refs} -> 
+        Phoenix.PubSub.broadcast(PhoenixPlayground.PubSub, Atom.to_string(name), :update)
         {:noreply, %__MODULE__{window | refs: refs}}
     end
   end
@@ -206,6 +210,11 @@ defmodule Crane.Browser.Window do
 
   def sockets(%__MODULE__{name: name}) do
     GenServer.call(name, :sockets)
+  end
+
+  def sockets!(window) do
+    {:ok, sockets} = sockets(window)
+    sockets
   end
 
   def to_proto(%__MODULE__{name: name, refs: refs}) do

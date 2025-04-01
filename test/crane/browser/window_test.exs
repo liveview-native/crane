@@ -214,11 +214,21 @@ defmodule Crane.Browser.WindowTest do
       {:ok, window: window}
     end
 
-    test "will return all socket names", %{window: window} do
+    test "will return all sockets in a tuple", %{window: window} do
       {:ok, %WebSocket{} = socket_1, window} = Window.new_socket(window, url: "http://localhost:4567/websocket")
       {:ok, %WebSocket{} = socket_2, window} = Window.new_socket(window, url: "http://localhost:4567/websocket")
 
       {:ok, sockets} = Window.sockets(window) 
+
+      assert socket_1 in sockets
+      assert socket_2 in sockets
+    end
+
+    test "will return all sockets", %{window: window} do
+      {:ok, %WebSocket{} = socket_1, window} = Window.new_socket(window, url: "http://localhost:4567/websocket")
+      {:ok, %WebSocket{} = socket_2, window} = Window.new_socket(window, url: "http://localhost:4567/websocket")
+
+      sockets = Window.sockets!(window) 
 
       assert socket_1 in sockets
       assert socket_2 in sockets

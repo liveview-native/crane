@@ -31,11 +31,21 @@ defmodule Crane.BrowserTest do
   end
 
   describe "windows" do
-    test "will return all window names" do
+    test "will return all windows in a tuple" do
       {:ok, %Window{} = window_1, browser} = Browser.new_window(%Browser{})
       {:ok, %Window{} = window_2, browser} = Browser.new_window(browser)
 
       {:ok, windows} = Browser.windows(browser)
+
+      assert window_1 in windows
+      assert window_2 in windows
+    end
+
+    test "will return all windows" do
+      {:ok, %Window{} = window_1, browser} = Browser.new_window(%Browser{})
+      {:ok, %Window{} = window_2, browser} = Browser.new_window(browser)
+
+      windows = Browser.windows!(browser)
 
       assert window_1 in windows
       assert window_2 in windows
