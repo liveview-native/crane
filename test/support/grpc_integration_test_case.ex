@@ -10,13 +10,14 @@ defmodule GRPC.Integration.TestCase do
   end
 
   def run_server(servers, func, port \\ 0, opts \\ []) do
-    {:ok, _pid, port} = GRPC.Server.start(servers, port, opts)
+    {:ok, pid, port} = GRPC.Server.start(servers, port, opts)
 
     try do
       func.(port)
     after
       :ok = GRPC.Server.stop(servers)
     end
+
   end
 
   def run_endpoint(endpoint, func, port \\ 0) do

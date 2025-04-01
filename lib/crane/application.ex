@@ -1,10 +1,12 @@
 defmodule Crane.Application do
   use Application
+
   def start(_type, _args) do
+    Application.put_env(:phoenix_playground, :plug, Crane.Phoenix.Router)
     children = [
       {Crane.Browser, []},
-      # {Bandit, plug: Crane.Endpoint.Debugger},
-      {GRPC.Server.Supervisor, endpoint: Crane.Endpoint.GRPC, port: 50051, start_server: true}
+      {GRPC.Server.Supervisor, endpoint: Crane.Endpoint.GRPC, port: 50051, start_server: true},
+      {PhoenixPlayground, plug: Crane.Phoenix.Router, open_browser: false}
     ]
 
     opts = [strategy: :one_for_one, name: __MODULE__]

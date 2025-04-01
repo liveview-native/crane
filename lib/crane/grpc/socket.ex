@@ -23,8 +23,11 @@ defmodule Crane.GRPC.Socket do
         data: data
       }
 
+
       GRPC.Server.send_reply(stream, msg)
     end)
+
+    Process.register(self(), :"#{request.name}-receive")
 
     wait_forever()
   end

@@ -5,6 +5,7 @@ defmodule Crane.Protos.Browser.Window do
 
   field :name, 1, type: :string
   field :browser_name, 2, type: :string, json_name: "browserName"
+  field :sockets, 3, repeated: true, type: :string
 end
 
 defmodule Crane.Protos.Browser.WindowService.Service do

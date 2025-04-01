@@ -8,11 +8,13 @@ defmodule Crane.Integration.UsageTest do
   alias Crane.Protos
 
   setup do
+    {:ok, browser_pid} = Crane.Browser.start_link([])
     fetch_req_options = Application.get_env(:crane, :fetch_req_options, [])
     Application.put_env(:crane, :fetch_req_options, [])
 
     on_exit(fn -> 
       Application.put_env(:crane, :fetch_req_options, fetch_req_options)
+      Process.exit(browser_pid, :normal)
     end)
 
     :ok

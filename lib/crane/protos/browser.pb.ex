@@ -1,19 +1,10 @@
-defmodule Crane.Protos.Browser.WindowsEntry do
-  @moduledoc false
-
-  use Protobuf, map: true, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
-
-  field :key, 1, type: :string
-  field :value, 2, type: Crane.Protos.Browser.Window
-end
-
 defmodule Crane.Protos.Browser do
   @moduledoc false
 
   use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   field :name, 1, type: :string
-  field :windows, 2, repeated: true, type: Crane.Protos.Browser.WindowsEntry, map: true
+  field :windows, 2, repeated: true, type: :string
   field :headers, 3, repeated: true, type: Crane.Protos.Browser.Header
 end
 

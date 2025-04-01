@@ -11,7 +11,7 @@ defmodule Crane.GRPC.Window do
 
   def new(request, _stream) do
     {:ok, browser} = Browser.get(%Browser{name: String.to_existing_atom(request.browser_name)})
-    {:ok, window} = Browser.new_window(%Window{browser_name: browser.name})
+    {:ok, window, _browser} = Browser.new_window(%Browser{}, %Window{browser_name: browser.name})
 
     Window.to_proto(window)
   end
