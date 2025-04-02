@@ -7,8 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		007A39CB2D8C645400597DB4 /* ElixirKitCrane in Frameworks */ = {isa = PBXBuildFile; productRef = 007A39CA2D8C645400597DB4 /* ElixirKitCrane */; };
+		008382EE2D9C7F58001D4CF4 /* LiveViewNative in Frameworks */ = {isa = PBXBuildFile; productRef = 008382ED2D9C7F58001D4CF4 /* LiveViewNative */; };
 		008F5FE72D80E0A800C7171C /* LiveViewNative in Frameworks */ = {isa = PBXBuildFile; productRef = 008F5FE62D80E0A800C7171C /* LiveViewNative */; };
+		00AC344E2D9491E8009E232F /* ElixirKitCrane in Frameworks */ = {isa = PBXBuildFile; productRef = 00AC344D2D9491E8009E232F /* ElixirKitCrane */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,7 +29,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				007A39CB2D8C645400597DB4 /* ElixirKitCrane in Frameworks */,
+				008382EE2D9C7F58001D4CF4 /* LiveViewNative in Frameworks */,
+				00AC344E2D9491E8009E232F /* ElixirKitCrane in Frameworks */,
 				008F5FE72D80E0A800C7171C /* LiveViewNative in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -40,6 +42,7 @@
 			isa = PBXGroup;
 			children = (
 				008F5FD82D80E04D00C7171C /* CraneDemo */,
+				00AC344C2D9491E8009E232F /* Frameworks */,
 				008F5FD72D80E04D00C7171C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -50,6 +53,13 @@
 				008F5FD62D80E04D00C7171C /* CraneDemo.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		00AC344C2D9491E8009E232F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -73,7 +83,8 @@
 			name = CraneDemo;
 			packageProductDependencies = (
 				008F5FE62D80E0A800C7171C /* LiveViewNative */,
-				007A39CA2D8C645400597DB4 /* ElixirKitCrane */,
+				00AC344D2D9491E8009E232F /* ElixirKitCrane */,
+				008382ED2D9C7F58001D4CF4 /* LiveViewNative */,
 			);
 			productName = CraneDemo;
 			productReference = 008F5FD62D80E04D00C7171C /* CraneDemo.app */;
@@ -104,8 +115,8 @@
 			mainGroup = 008F5FCD2D80E04D00C7171C;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				008F5FE52D80E0A800C7171C /* XCLocalSwiftPackageReference "../../Packages/liveview-client-swiftui" */,
 				007A39C92D8C645400597DB4 /* XCLocalSwiftPackageReference "../ElixirKitCrane" */,
+				008382EC2D9C7F58001D4CF4 /* XCLocalSwiftPackageReference "../../Packages/liveview-client-swiftui" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 008F5FD72D80E04D00C7171C /* Products */;
@@ -354,20 +365,25 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../ElixirKitCrane;
 		};
-		008F5FE52D80E0A800C7171C /* XCLocalSwiftPackageReference "../../Packages/liveview-client-swiftui" */ = {
+		008382EC2D9C7F58001D4CF4 /* XCLocalSwiftPackageReference "../../Packages/liveview-client-swiftui" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "../../Packages/liveview-client-swiftui";
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		007A39CA2D8C645400597DB4 /* ElixirKitCrane */ = {
+		008382ED2D9C7F58001D4CF4 /* LiveViewNative */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = ElixirKitCrane;
+			productName = LiveViewNative;
 		};
 		008F5FE62D80E0A800C7171C /* LiveViewNative */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = LiveViewNative;
+		};
+		00AC344D2D9491E8009E232F /* ElixirKitCrane */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 007A39C92D8C645400597DB4 /* XCLocalSwiftPackageReference "../ElixirKitCrane" */;
+			productName = ElixirKitCrane;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

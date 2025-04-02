@@ -25,7 +25,7 @@ public final class Crane: @unchecked Sendable {
         public var history: CraneHistory
         
         public var canGoBack: Bool {
-            history.index > history.stack.indices.lowerBound
+            history.index > -1
         }
         
         public var canGoForward: Bool {
@@ -84,7 +84,7 @@ public final class Crane: @unchecked Sendable {
         ]
         
         let response = try await windowService.visit(request)
-        let document = response.viewTrees["main"]!
+        let document = response.viewTrees["body"]!
         let window = Window(
             window: craneWindow,
             url: url,
@@ -101,7 +101,7 @@ public final class Crane: @unchecked Sendable {
     @discardableResult
     public func refresh(window: Window) async throws -> Window {
         let response = try await windowService.refresh(window.window)
-        let document = response.viewTrees["main"]!
+        let document = response.viewTrees["body"]!
         window.document = GRPCDocument(
             document: document
         )
@@ -126,7 +126,7 @@ public final class Crane: @unchecked Sendable {
         ]
         
         let response = try await windowService.visit(request)
-        let document = response.viewTrees["main"]!
+        let document = response.viewTrees["body"]!
         window.url = url
         window.document = GRPCDocument(
             document: document
@@ -139,24 +139,26 @@ public final class Crane: @unchecked Sendable {
     @discardableResult
     public func back(window: Window) async throws -> Window {
         let response = try await windowService.back(window.window)
-        let document = response.viewTrees["main"]!
+        let document = response.viewTrees["body"]!
         window.document = GRPCDocument(
             document: document
         )
         window.stylesheets = response.stylesheets
         window.history = response.history
+        window.url = URL(string: response.history.stack[Int(response.history.index)].url)!
         return window
     }
     
     @discardableResult
     public func forward(window: Window) async throws -> Window {
         let response = try await windowService.forward(window.window)
-        let document = response.viewTrees["main"]!
+        let document = response.viewTrees["body"]!
         window.document = GRPCDocument(
             document: document
         )
         window.stylesheets = response.stylesheets
         window.history = response.history
+        window.url = URL(string: response.history.stack[Int(response.history.index)].url)!
         return window
     }
     

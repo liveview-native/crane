@@ -54,7 +54,7 @@ struct ContentView: View {
                     ProgressView("Stylesheet")
                 }
             }
-            .task {
+            .task(id: url) {
                 do {
                     let (stylesheetData, _) = try await URLSession.shared.data(from: url)
                     self.stylesheet = try? Stylesheet<EmptyRegistry>.init(from: String(data: stylesheetData, encoding: .utf8)!)
@@ -69,23 +69,9 @@ struct ContentView: View {
         var window: Crane.Window
         let navigate: (URL) -> ()
         
-        @State private var path = [LiveNavigationEntry<EmptyRegistry>]()
-        
-        var transaction: Transaction {
-            var transaction = Transaction()
-            transaction.disablesAnimations = true
-            return transaction
-        }
-        
         var body: some View {
-            let _ = print("redraw")
-            NavigationStack(path: Binding<[LiveNavigationEntry<EmptyRegistry>]> {
-                [LiveNavigationEntry<EmptyRegistry>]()
-            } set: { newValue in
-                if let destination = newValue.last?.url {
-                    navigate(destination)
-                }
-            }.transaction(transaction)) {
+            let _ = print("\(window.url)")
+            NavigationStack(path: .constant([LiveNavigationEntry<EmptyRegistry>]())) {
                 Group {
                     if let stylesheetURL = window.stylesheets.first.flatMap({ URL(string: $0, relativeTo: window.url) }) {
                         StylesheetLoader(url: stylesheetURL) { stylesheet in
@@ -107,6 +93,12 @@ struct ContentView: View {
                     EmptyView()
                 }
             }
+            .environment(\.navigationHandler, { url in
+                navigate(url)
+            })
+            .id(window.url)
+            .transition(.opacity)
+            .animation(.default, value: window.url)
         }
     }
     
@@ -157,6 +149,9 @@ struct ContentView: View {
                 ForEach(Array(window.history.stack.enumerated()), id: \.offset) { entry in
                     Button {
                         // navigate to index
+                        Task {
+                            try! await crane.back(window: window)
+                        }
                     } label: {
                         Text(entry.element.url)
                     }

@@ -10,13 +10,12 @@ import ElixirKitCrane
 
 @main
 struct CraneDemoApp: App {
-    init() {
-        ElixirKitCrane.start()
-    }
+    @State private var server = ElixirKitCrane()
     
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(server)
         }
     }
 }

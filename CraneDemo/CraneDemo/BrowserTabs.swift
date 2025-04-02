@@ -42,7 +42,8 @@ struct BrowserTabsView<ID: Hashable, Content: View, NewTabForm: View, NewTabView
         .scrollDisabled(true)
         .scrollPosition($scrollPosition)
         .frame(maxHeight: .infinity)
-        .safeAreaInset(edge: .bottom) {
+//        .safeAreaInset(edge: .bottom) {
+        .overlay(alignment: .bottom) {
             ScrollViewReader { proxy in
                 VStack {
                     VStack(spacing: 0) {
