@@ -9,8 +9,6 @@ defmodule Crane.Phoenix.Live.Window do
   def mount(params, _session, socket) do
     {:ok, window} = Window.get(params["name"])
 
-    IO.inspect(@tabs)
-
     {:ok, assign(socket, %{
       window: window,
       active_tab: "Logs",
@@ -46,7 +44,10 @@ defmodule Crane.Phoenix.Live.Window do
 
           <div class="bottom-pane">
               <div class="tabs">
-                <button :for={tab <- @tabs} class="tab-button">{tab}</button>
+                <button :for={tab <- @tabs} phx-click="set_active_tab" phx-value-tab={tab} class={[
+                  "tab-button",
+                  active?(@active_tab, tab) && "active"
+                ]}>{tab}</button>
               </div>
               <div class="log-content">
                   <div class="log-line log-info">[Info] Application initialized successfully. (main.js:10)</div>
@@ -62,8 +63,12 @@ defmodule Crane.Phoenix.Live.Window do
     """
   end
 
-  defp active_tab(active_tab, active_tab),
-    do: "active"
-  defp active_tab(_active_tab, _other),
-    do: nil
+  defp active?(active_tab, active_tab),
+    do: true
+  defp active?(_active_tab, _other),
+    do: false
+
+  def handle_event("set_active_tab", %{"tab" => tab}, socket) do
+    {:noreply, assign(socket, :active_tab, tab)}
+  end
 end

@@ -1,12 +1,14 @@
 defmodule Crane.Application do
   use Application
 
+  @live_reload Application.compile_env(:phoenix_playground, :live_reload)
+
   def start(_type, _args) do
-    Application.put_env(:phoenix_playground, :plug, Crane.Phoenix.Router)
+
     children = [
       {Crane.Browser, []},
       {GRPC.Server.Supervisor, endpoint: Crane.Endpoint.GRPC, port: 50051, start_server: true},
-      # {PhoenixPlayground, plug: Crane.Phoenix.Router, live_reload: false, open_browser: false}
+      {PhoenixPlayground, plug: Crane.Phoenix.Router, live_reload: @live_reload, open_browser: false}
     ]
 
     opts = [strategy: :one_for_one, name: __MODULE__]
