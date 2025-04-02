@@ -43,7 +43,7 @@ defmodule Crane.MixProject do
   defp deps do
     [
       {:req, "~> 0.5"},
-      {:phoenix_playground, github: "phoenix-playground/phoenix_playground"},
+      {:phoenix_playground, github: "bcardarella/phoenix_playground", branch: "bc-release-compat"},
       {:mint_web_socket, "~> 1.0.4"},
       {:floki, "~> 0.37"},
       {:websockex, "~> 0.4"},
