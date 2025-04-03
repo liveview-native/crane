@@ -25,5 +25,5 @@ protoc -I priv/protos --grpc-swift_out=./Sources/Crane/generated $(find priv/pro
 ```
 
 ```sh
-mix elixirkit ElixirKitCrane --sdk iphonesimulator
+MIX_ENV=prod mix elixirkit ElixirKitCrane --target iphonesimulator-arm64 --target iphoneos
 ```

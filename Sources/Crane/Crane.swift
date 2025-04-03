@@ -20,7 +20,7 @@ public final class Crane: @unchecked Sendable {
     public final class Window: @unchecked Sendable {
         public let window: CraneWindow
         public var url: URL
-        public var document: Document
+        public var documents: [Int32:Document]
         public var stylesheets: [String]
         public var history: CraneHistory
         
@@ -35,13 +35,13 @@ public final class Crane: @unchecked Sendable {
         init(
             window: CraneWindow,
             url: URL,
-            document: Document,
+            documents: [Int32: Document],
             stylesheets: [String],
             history: CraneHistory
         ) {
             self.window = window
             self.url = url
-            self.document = document
+            self.documents = documents
             self.stylesheets = stylesheets
             self.history = history
         }
@@ -57,7 +57,11 @@ public final class Crane: @unchecked Sendable {
         self.runloop = Task { [weak client] in
             while true {
                 do {
+                    print("connecting")
+                    let start = Date.now
+                    print(start)
                     try await client?.runConnections()
+                    print("\(start.distance(to: .now))s")
                     return
                 } catch {
                     print(error)
@@ -88,9 +92,11 @@ public final class Crane: @unchecked Sendable {
         let window = Window(
             window: craneWindow,
             url: url,
-            document: GRPCDocument(
-                document: document
-            ),
+            documents: [
+                response.history.index: GRPCDocument(
+                    document: document
+                )
+            ],
             stylesheets: response.stylesheets,
             history: response.history
         )
@@ -102,7 +108,7 @@ public final class Crane: @unchecked Sendable {
     public func refresh(window: Window) async throws -> Window {
         let response = try await windowService.refresh(window.window)
         let document = response.viewTrees["body"]!
-        window.document = GRPCDocument(
+        window.documents[response.history.index] = GRPCDocument(
             document: document
         )
         window.stylesheets = response.stylesheets
@@ -128,7 +134,7 @@ public final class Crane: @unchecked Sendable {
         let response = try await windowService.visit(request)
         let document = response.viewTrees["body"]!
         window.url = url
-        window.document = GRPCDocument(
+        window.documents[response.history.index] = GRPCDocument(
             document: document
         )
         window.stylesheets = response.stylesheets
@@ -140,7 +146,7 @@ public final class Crane: @unchecked Sendable {
     public func back(window: Window) async throws -> Window {
         let response = try await windowService.back(window.window)
         let document = response.viewTrees["body"]!
-        window.document = GRPCDocument(
+        window.documents[response.history.index] = GRPCDocument(
             document: document
         )
         window.stylesheets = response.stylesheets
@@ -153,7 +159,7 @@ public final class Crane: @unchecked Sendable {
     public func forward(window: Window) async throws -> Window {
         let response = try await windowService.forward(window.window)
         let document = response.viewTrees["body"]!
-        window.document = GRPCDocument(
+        window.documents[response.history.index] = GRPCDocument(
             document: document
         )
         window.stylesheets = response.stylesheets

@@ -10,7 +10,7 @@ defmodule Crane.Application do
     children = [
       {Crane.Browser, []},
       {GRPC.Server.Supervisor, endpoint: Crane.Endpoint.GRPC, port: grpc_port, start_server: true},
-      {PhoenixPlayground, plug: Crane.Phoenix.Router, live_reload: @live_reload, open_browser: false}
+      {PhoenixPlayground, plug: Crane.Phoenix.Router, live_reload: @live_reload, open_browser: false, ip: {0, 0, 0, 0}}
     ]
 
     opts = [strategy: :one_for_one, name: __MODULE__]

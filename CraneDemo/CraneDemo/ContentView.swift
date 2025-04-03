@@ -9,6 +9,8 @@ import SwiftUI
 import LiveViewNative
 import Crane
 
+// https://my-app-crimson-water-2591.fly.dev/
+
 struct ContentView: View {
     @State private var crane = Crane()
     
@@ -50,14 +52,18 @@ struct ContentView: View {
             VStack {
                 if let stylesheet {
                     content(stylesheet)
+                        .transition(.opacity)
                 } else {
                     ProgressView("Stylesheet")
+                        .transition(.opacity)
                 }
             }
             .task(id: url) {
                 do {
                     let (stylesheetData, _) = try await URLSession.shared.data(from: url)
-                    self.stylesheet = try? Stylesheet<EmptyRegistry>.init(from: String(data: stylesheetData, encoding: .utf8)!)
+                    withAnimation(.default.speed(2)) {
+                        self.stylesheet = try? Stylesheet<EmptyRegistry>.init(from: String(data: stylesheetData, encoding: .utf8)!)
+                    }
                 } catch {
                     print(error)
                 }
@@ -71,34 +77,27 @@ struct ContentView: View {
         
         var body: some View {
             let _ = print("\(window.url)")
-            NavigationStack(path: .constant([LiveNavigationEntry<EmptyRegistry>]())) {
-                Group {
-                    if let stylesheetURL = window.stylesheets.first.flatMap({ URL(string: $0, relativeTo: window.url) }) {
-                        StylesheetLoader(url: stylesheetURL) { stylesheet in
-                            DocumentView<EmptyRegistry>(
-                                url: window.url,
-                                document: window.document,
-                                stylesheet: stylesheet
-                            )
+            ZStack {
+                if let stylesheetURL = window.stylesheets.first.flatMap({ URL(string: $0, relativeTo: window.url) }) {
+                    StylesheetLoader(url: stylesheetURL) { stylesheet in
+                        ForEach(window.history.stack.indices, id: \.self) { index in
+                            if window.history.index == Int32(index) {
+                                DocumentView<EmptyRegistry>(
+                                    url: window.url,
+                                    document: window.documents[Int32(index)]!,
+                                    stylesheet: stylesheet
+                                )
+                                .transition(.opacity)
+                            }
                         }
-                    } else {
-                        DocumentView<EmptyRegistry>(
-                            url: window.url,
-                            document: window.document,
-                            stylesheet: nil
-                        )
                     }
-                }
-                .navigationDestination(for: LiveNavigationEntry<EmptyRegistry>.self) { entry in
-                    EmptyView()
+                    .animation(.default.speed(2), value: window.history.index)
                 }
             }
             .environment(\.navigationHandler, { url in
                 navigate(url)
             })
-            .id(window.url)
-            .transition(.opacity)
-            .animation(.default, value: window.url)
+            .animation(.default, value: window.history.index)
         }
     }
     
@@ -234,7 +233,7 @@ struct ContentView: View {
                 .keyboardType(.URL)
                 .multilineTextAlignment(.center)
                 .onSubmit {
-                    if let url = URL(string: urlText) {
+                    if let url = URL(string: urlText.trimmingCharacters(in: .whitespacesAndNewlines)) {
                         Task {
                             let window = try! await crane.newWindow(url: url)
                             selectedTab = window.window.name

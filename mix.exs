@@ -57,7 +57,9 @@ defmodule Crane.MixProject do
       {:bandit, "~> 1.0"},
       {:cdpotion, "~> 0.1.0"},
 
-      {:elixirkit, git: "https://github.com/liveview-native/elixirkit.git", branch: "main"}
+      {:elixirkit, github: "liveview-native/elixirkit", branch: "main"},
+
+      {:plug_crypto, github: "elixir-plug/plug_crypto", branch: "main", override: true},
     ]
   end
 end

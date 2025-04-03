@@ -10,7 +10,12 @@ import ElixirKitCrane
 
 @main
 struct CraneDemoApp: App {
-    @State private var server = ElixirKitCrane()
+    @State private var server: ElixirKitCrane
+    
+    init() {
+        setenv("GRPC_PORT", String(port), 0)
+        self._server = .init(wrappedValue: ElixirKitCrane())
+    }
     
     var body: some Scene {
         WindowGroup {
