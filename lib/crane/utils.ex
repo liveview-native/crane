@@ -28,4 +28,14 @@ defmodule Crane.Utils do
     # an atom by default
     Map.put(refs, ref, Atom.to_string(reffable.name))
   end
+
+  def subscribe(topic) do
+    pubsub = Application.get_env(:crane, :pubsub, PhoenixPlayground.PubSub)
+    Phoenix.PubSub.subscribe(pubsub, topic)
+  end
+
+  def broadcast(topic, message) do
+    pubsub = Application.get_env(:crane, :pubsub, PhoenixPlayground.PubSub)
+    Phoenix.PubSub.broadcast(pubsub, topic, message)
+  end
 end

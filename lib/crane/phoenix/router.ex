@@ -13,6 +13,7 @@ defmodule Crane.Phoenix.Router do
     pipe_through :browser
 
     live "/", Crane.Phoenix.Live.Console
+    live "/browser/:name", Crane.Phoenix.Live.Browser
     live "/window/:name", Crane.Phoenix.Live.Window
   end
 end
