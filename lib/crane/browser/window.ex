@@ -14,6 +14,11 @@ defmodule Crane.Browser.Window do
     response: nil,
     refs: %{}
 
+  def start_link(args) when is_list(args) do
+    name = generate_name(:window)
+    GenServer.start_link(__MODULE__, [{:name, name} | args], name: name)
+  end
+
   def start_link(state) when is_map(state) do
     state =
       state
@@ -28,7 +33,15 @@ defmodule Crane.Browser.Window do
   end
 
   @impl true
-  def init(state) do
+  def init(args) when is_list(args) do
+    Process.flag(:trap_exit, true)
+    {:ok, %__MODULE__{
+      name: args[:name],
+      browser_name: args[:browser].name
+    }}
+  end
+
+  def init(state) when is_map(state) do
     Process.flag(:trap_exit, true)
     {:ok, struct(__MODULE__, state)}
   end
@@ -42,14 +55,15 @@ defmodule Crane.Browser.Window do
     {:reply, window, window}
   end
 
-  def handle_call({:fetch, options}, _from, %__MODULE__{name: name} = window) do
+  def handle_call({:fetch, options}, _from, %__MODULE__{} = window) do
     options
     |> Keyword.validate([url: nil, method: "GET", headers: [], body: nil])
     |> case do
       {:ok, options} ->
-        {:ok, %Browser{} = browser} = Browser.get()
+        {:ok, %Browser{} = browser} = Browser.get(window.browser_name)
         {_request, response} =
           options
+          |> Keyword.update(:url, nil, &String.trim(&1))
           |> Keyword.put(:headers, browser.headers ++ options[:headers])
           |> Keyword.merge(Application.get_env(:crane, :fetch_req_options, []))
           |> Req.new()
@@ -59,9 +73,9 @@ defmodule Crane.Browser.Window do
 
         %{private: %{cookie_jar: cookie_jar}} = response
 
-        :ok = Browser.update_cookie_jar(cookie_jar)
+        :ok = Browser.update_cookie_jar(browser, cookie_jar)
 
-        Phoenix.PubSub.broadcast(PhoenixPlayground.PubSub, Atom.to_string(name), :update)
+        broadcast(Atom.to_string(window.name), :update)
         {:reply, {:ok, response, window}, window}
 
       {:error, invalid_options} ->
@@ -116,7 +130,7 @@ defmodule Crane.Browser.Window do
       {:ok, socket} <- WebSocket.new(window, options) do
         refs = monitor(socket, refs)
         window = %__MODULE__{window | refs: refs}
-        Phoenix.PubSub.broadcast(PhoenixPlayground.PubSub, Atom.to_string(name), :update)
+        broadcast(Atom.to_string(name), :update)
 
         {:reply, {:ok, socket, window}, window}
     else
@@ -151,7 +165,7 @@ defmodule Crane.Browser.Window do
       {nil, _refs} ->
         {:noreply, window}
       {_name, refs} -> 
-        Phoenix.PubSub.broadcast(PhoenixPlayground.PubSub, Atom.to_string(name), :update)
+        broadcast(Atom.to_string(name), :update)
         {:noreply, %__MODULE__{window | refs: refs}}
     end
   end
@@ -160,7 +174,16 @@ defmodule Crane.Browser.Window do
     {:noreply, state}
   end
 
-  def new(state \\ %{}) when is_map(state) do
+  def new(args) when is_list(args) do
+    with {:ok, pid} <- start_link(args),
+      {:ok, window} <- GenServer.call(pid, :get) do
+        {:ok, window}
+    else
+      error -> {:error, error}
+    end
+  end
+
+  def restore(%__MODULE__{} = state) do
     with {:ok, pid} <- start_link(state),
       {:ok, window} <- GenServer.call(pid, :get) do
         {:ok, window}
@@ -169,8 +192,8 @@ defmodule Crane.Browser.Window do
     end
   end
 
-  def close(window) do
-    GenServer.stop(window.name, :normal)
+  def close(%__MODULE__{name: name}) do
+    GenServer.stop(name, :normal)
   end
 
   def get(%__MODULE__{name: name}),
@@ -217,9 +240,10 @@ defmodule Crane.Browser.Window do
     sockets
   end
 
-  def to_proto(%__MODULE__{name: name, refs: refs}) do
+  def to_proto(%__MODULE__{name: name, refs: refs, browser_name: browser_name}) do
     %Protos.Browser.Window{
       name: Atom.to_string(name),
+      browser_name: Atom.to_string(browser_name),
       sockets: get_reference_names(refs, :socket)
     }
   end

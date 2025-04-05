@@ -1,4 +1,4 @@
-defmodule Crane.Phoenix.Live.Console do
+defmodule Crane.Phoenix.Live.Browser do
   use Phoenix.LiveView
 
   alias Crane.{
@@ -6,8 +6,8 @@ defmodule Crane.Phoenix.Live.Console do
     Browser.Window
   }
 
-  def mount(_params, _session, socket) do
-    {:ok, browser} = Browser.get()
+  def mount(params, _session, socket) do
+    {:ok, browser} = Browser.get(params["name"])
     {:ok, windows} = Browser.windows(browser)
 
     Enum.each([browser | windows], fn(resource) ->
@@ -45,7 +45,8 @@ defmodule Crane.Phoenix.Live.Console do
   end
 
   def handle_info(:update, socket) do
-    {:ok, browser} = Crane.Browser.get()
+    browser = socket.assigns.browser
+    {:ok, browser} = Crane.Browser.get(browser.name)
     {:ok, windows} = Crane.Browser.windows(browser)
     {:noreply, assign(socket, browser: browser, windows: windows)}
   end
