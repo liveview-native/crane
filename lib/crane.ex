@@ -44,6 +44,7 @@ defmodule Crane do
   end
 
   def handle_info(:reconnect, crane) do
+    IO.puts("RECONNECT")
     {:noreply, crane}
   end
 
