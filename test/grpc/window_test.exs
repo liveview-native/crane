@@ -10,9 +10,8 @@ defmodule Crane.GRPC.WindowTest do
   import Crane.Test.Utils
 
   setup do
-    {:ok, browser_pid} = Crane.Browser.start_link([])
-    {:ok, window_pid} = Window.start_link(%{})
-    {:ok, window} = GenServer.call(window_pid, :get)
+    {:ok, browser, _crane} = Crane.new_browser()
+    {:ok, window, browser} = Crane.Browser.new_window(browser)
     
     Req.Test.stub(Window, fn(conn) ->
       case Conn.request_url(conn) do
@@ -45,20 +44,17 @@ defmodule Crane.GRPC.WindowTest do
     {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/2")
     {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/3")
 
-    on_exit fn ->
-      Process.exit(browser_pid, :normal)
-      Process.exit(window_pid, :normal)
-    end
-
-    {:ok, window: window}
+    {:ok, browser: browser, window: window}
   end
 
   describe "new" do
-    test "will spawn a new window on the browser" do
+    test "will spawn a new window on the browser", %{browser: browser} do
       run_server(Server, fn port ->
         {:ok, channel} = GRPC.Stub.connect("localhost:#{port}")
 
-        request = %Protos.Browser.Window{}
+        request = Window.to_proto(%Window{
+          browser_name: browser.name
+        })
 
         {:ok, %Protos.Browser.Window{} = window} = Client.new(channel, request)
 
@@ -182,10 +178,10 @@ defmodule Crane.GRPC.WindowTest do
   end
 
   describe "close" do
-    test "an active window" do
+    test "an active window", %{browser: browser} do
       run_server(Server, fn port ->
         {:ok, channel} = GRPC.Stub.connect("localhost:#{port}")
-        {:ok, window} = Window.new()
+        {:ok, window} = Window.new(browser: browser)
 
         pid = Process.whereis(window.name)
 

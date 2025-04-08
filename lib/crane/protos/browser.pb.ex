@@ -13,6 +13,8 @@ defmodule Crane.Protos.BrowserService.Service do
 
   use GRPC.Service, name: "BrowserService", protoc_gen_elixir_version: "0.14.1"
 
+  rpc :New, Crane.Protos.Empty, Crane.Protos.Browser
+
   rpc :Get, Crane.Protos.Browser, Crane.Protos.Browser
 
   rpc :CloseWindows, Crane.Protos.Browser, Crane.Protos.Empty

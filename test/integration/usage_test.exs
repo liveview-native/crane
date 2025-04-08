@@ -8,27 +8,24 @@ defmodule Crane.Integration.UsageTest do
   alias Crane.Protos
 
   setup do
-    {:ok, browser_pid} = Crane.Browser.start_link([])
+    {:ok, browser, _crane} = Crane.new_browser()
     fetch_req_options = Application.get_env(:crane, :fetch_req_options, [])
     Application.put_env(:crane, :fetch_req_options, [])
 
     on_exit(fn -> 
       Application.put_env(:crane, :fetch_req_options, fetch_req_options)
-      Process.exit(browser_pid, :normal)
     end)
 
-    :ok
+    {:ok, browser: browser}
   end
 
-  test "bad uri" do
+  test "bad uri", %{browser: browser} do
     run_server([BrowserServer, WindowServer], fn port ->
       {:ok, channel} = GRPC.Stub.connect("localhost:#{port}")
 
-      headers = [
-        %Protos.Browser.Header{name: "Accept", value: "application/gameboy"}
-      ]
+      request = Crane.Browser.to_proto(browser)
 
-      {:ok, browser} = BrowserClient.get(channel, %Protos.Browser{headers: headers})
+      {:ok, browser} = BrowserClient.get(channel, request)
 
       {:ok, window} = WindowClient.new(channel, %Protos.Browser.Window{browser_name: browser.name})
 

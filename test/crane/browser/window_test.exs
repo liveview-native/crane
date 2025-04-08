@@ -10,37 +10,60 @@ defmodule Crane.Browser.WindowTest do
 
   import Crane.Test.Utils
 
-  setup do
-    {:ok, browser_pid} = Browser.start_link([])
+  setup config do
+    Application.put_env(:crane, :pubsub, config.test)
+    start_pubsub(config)
+    {:ok, browser} = Browser.new()
 
     on_exit fn ->
-      Process.exit(browser_pid, :normal)
+      Application.delete_env(:crane, :pubsub)
     end
 
-    :ok
+    {:ok, browser: browser}
   end
 
   describe "new" do
-    test "will spawn a new Window process" do
-      {:ok, %Window{name: name}} = Window.new()
+    test "will spawn a new Window process", %{browser: browser} do
+      {:ok, %Window{name: name}} = Window.new(browser: browser)
 
       refute is_nil(Process.whereis(name))
     end
   end
 
   describe "close" do
-    test "will close a Window process" do
-      {:ok, window} = Window.new()
+    test "will close a Window process", %{browser: browser} do
+      {:ok, window} = Window.new(browser: browser)
+
+      pid = Process.whereis(window.name)
+
+      assert Process.alive?(pid)
 
       :ok = Window.close(window)
 
-      refute Process.whereis(window.name)
+      refute Process.alive?(pid)
+    end
+
+    test "when window closes all sockets are closed too", %{browser: browser} do
+      {:ok, window} = Window.new(browser: browser)
+
+      {:ok, %WebSocket{} = socket_1, window} = Window.new_socket(window, url: "http://localhost:4567/websocket")
+      {:ok, %WebSocket{} = socket_2, window} = Window.new_socket(window, url: "http://localhost:4567/websocket")
+
+      socket_1_pid = Process.whereis(socket_1.name)
+      socket_2_pid = Process.whereis(socket_2.name)
+
+      :ok = Window.close(window)
+
+      :timer.sleep(10)
+
+      refute Process.alive?(socket_1_pid)
+      refute Process.alive?(socket_2_pid)
     end
   end
 
   describe "visit" do
-    setup do
-      {:ok, pid} = Window.start_link(%{})
+    setup %{browser: browser} do
+      {:ok, pid} = Window.start_link(%{browser_name: browser.name})
 
       {:ok, window} = GenServer.call(pid, :get)
 
@@ -75,7 +98,7 @@ defmodule Crane.Browser.WindowTest do
 
       Req.Test.allow(Window, self(), pid_for(window))
       {:ok, _response, _window} = Window.visit(window, url: url)
-      {:ok, browser} = Browser.get()
+      {:ok, browser} = Browser.get(window.browser_name)
       {:ok, cookie, _cookie_jar} = HttpCookie.Jar.get_cookie_header_value(browser.cookie_jar, URI.new!(url))
 
       assert cookie == "session-id=123456"
@@ -83,13 +106,8 @@ defmodule Crane.Browser.WindowTest do
   end
 
   describe "fetch" do
-    setup do
-      {:ok, window_pid} = Window.start_link(%{})
-      {:ok, window} = GenServer.call(window_pid, :get)
-
-      on_exit fn ->
-        Process.exit(window_pid, :normal)
-      end
+    setup %{browser: browser} do
+      {:ok, window} = Window.new(browser: browser)
 
       {:ok, window: window}
     end
@@ -109,7 +127,7 @@ defmodule Crane.Browser.WindowTest do
       assert window.history.stack == []
     end
 
-    test "updates browser cookie jar when cookies are sent back", %{window: window} do
+    test "updates browser cookie jar when cookies are sent back", %{browser: browser, window: window} do
       url = "https://dockyard.com"
       
       Req.Test.stub(Window, fn(conn) ->
@@ -121,7 +139,7 @@ defmodule Crane.Browser.WindowTest do
       Req.Test.allow(Window, self(), pid_for(window))
 
       {:ok, _response, _window} = Window.fetch(window, url: url)
-      {:ok, browser} = Browser.get()
+      {:ok, browser} = Browser.get(browser.name)
       {:ok, cookie, _cookie_jar} = HttpCookie.Jar.get_cookie_header_value(browser.cookie_jar, URI.new!(url))
 
       assert cookie == "session-id=123456"
@@ -129,9 +147,8 @@ defmodule Crane.Browser.WindowTest do
   end
 
   describe "forward/back/go" do
-    setup do
-      {:ok, window_pid} = Window.start_link(%{})
-      {:ok, window} = GenServer.call(window_pid, :get)
+    setup %{browser: browser} do
+      {:ok, window} = Window.new(browser: browser)
       
       Req.Test.stub(Window, fn(conn) ->
         case Conn.request_url(conn) do
@@ -156,10 +173,6 @@ defmodule Crane.Browser.WindowTest do
       {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/4")
       {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/5")
 
-      on_exit fn ->
-        Process.exit(window_pid, :normal)
-      end
-
       {:ok, window: window}
     end
 
@@ -182,8 +195,8 @@ defmodule Crane.Browser.WindowTest do
   end
 
   describe "restore" do
-    test "will restore a previously closed window state" do
-      {:ok, window} = Window.new()
+    test "will restore a previously closed window state", %{browser: browser} do
+      {:ok, window} = Window.new(browser: browser)
       
       Req.Test.stub(Window, fn(conn) ->
         Plug.Conn.send_resp(conn, conn.status || 200, "<Text>Success!</Text>")
@@ -196,7 +209,7 @@ defmodule Crane.Browser.WindowTest do
 
       :ok = Window.close(window)
 
-      {:ok, restored_window} = Window.new(window)
+      {:ok, restored_window} = Window.restore(window)
 
       assert window.name == restored_window.name
       assert window.history == restored_window.history

@@ -5,14 +5,18 @@ defmodule Crane.GRPC.BrowserTest do
   alias Crane.Protos.BrowserService.Stub, as: Client
   alias Crane.Protos
 
-  setup do
-    {:ok, browser_pid} = Crane.Browser.start_link([])
+  describe "new" do
+    test "will return a new browser" do
+      run_server(Server, fn port ->
+        {:ok, channel} = GRPC.Stub.connect("localhost:#{port}")
 
-    on_exit fn ->
-      Process.exit(browser_pid, :normal)
+        {:ok, %Protos.Browser{} = browser} = Client.new(channel, %Protos.Empty{})
+
+        pid = Process.whereis(String.to_existing_atom(browser.name))
+
+        assert Process.alive?(pid)
+      end)
     end
-
-    :ok
   end
 
   describe "get" do
@@ -20,15 +24,11 @@ defmodule Crane.GRPC.BrowserTest do
       run_server(Server, fn port ->
         {:ok, channel} = GRPC.Stub.connect("localhost:#{port}")
 
-        headers = [
-          %Crane.Protos.Browser.Header{name: "Accept", value: "application/gameboy"}
-        ]
+        {:ok, browser} = Crane.Browser.new()
 
-        {:ok, %Protos.Browser{} = browser} = Client.get(channel, %Protos.Browser{headers: headers})
+        {:ok, %Protos.Browser{} = proto_browser} = Client.get(channel, Crane.Browser.to_proto(browser))
 
-        Enum.each(headers, fn(header) ->
-          assert Enum.member?(browser.headers, header)
-        end)
+        assert String.to_existing_atom(proto_browser.name) == browser.name
       end)
     end
   end

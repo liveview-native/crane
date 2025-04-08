@@ -1,28 +1,32 @@
 defmodule Crane.BrowserTest do
   use ExUnit.Case
+  import Crane.Test.Utils
 
   alias Crane.{Browser, Browser.Window}
 
-  setup do
-    {:ok, browser_pid} = Browser.start_link([])
+  setup config do
+    Application.put_env(:crane, :pubsub, config.test)
+    start_pubsub(config)
 
     on_exit fn ->
-      Process.exit(browser_pid, :normal)
+      Application.delete_env(:crane, :pubsub)
     end
 
     :ok
   end
 
-  describe "get" do
-    test "will return the browser struct" do
-      {:ok, %Browser{} = _browser} = Browser.get()
+  describe "new" do
+    test "will create a new browser" do
+      {:ok, %Browser{name: name} = _browser} = Browser.new()
+
+      refute is_nil(Process.whereis(name))
     end
 
     test "will return browser struct with headers assigned" do
       headers = [
         {"Foo", "Bar"}
       ]
-      {:ok, %Browser{} = browser} = Browser.get(%Browser{headers: headers})
+      {:ok, %Browser{} = browser} = Browser.new(headers: headers)
 
       Enum.each(headers, fn(header) ->
         assert Enum.member?(browser.headers, header)
@@ -30,9 +34,39 @@ defmodule Crane.BrowserTest do
     end
   end
 
+  describe "get" do
+    setup do
+      {:ok, browser_pid} = Browser.start_link([])
+      {:ok, browser} = GenServer.call(browser_pid, :get)
+
+      on_exit fn ->
+        Process.exit(browser_pid, :normal)
+      end
+
+      {:ok, browser: browser}
+    end
+
+    test "will return the browser struct", %{browser: browser} do
+      {:ok, %Browser{} = got_browser} = Browser.get(%Browser{name: browser.name})
+
+      assert browser == got_browser
+    end
+  end
+
   describe "windows" do
-    test "will return all windows in a tuple" do
-      {:ok, %Window{} = window_1, browser} = Browser.new_window(%Browser{})
+    setup do
+      {:ok, browser_pid} = Browser.start_link([])
+      {:ok, browser} = GenServer.call(browser_pid, :get)
+
+      on_exit fn ->
+        Process.exit(browser_pid, :normal)
+      end
+
+      {:ok, browser: browser}
+    end
+
+    test "will return all windows in a tuple", %{browser: browser} do
+      {:ok, %Window{} = window_1, browser} = Browser.new_window(browser)
       {:ok, %Window{} = window_2, browser} = Browser.new_window(browser)
 
       {:ok, windows} = Browser.windows(browser)
@@ -41,8 +75,8 @@ defmodule Crane.BrowserTest do
       assert window_2 in windows
     end
 
-    test "will return all windows" do
-      {:ok, %Window{} = window_1, browser} = Browser.new_window(%Browser{})
+    test "will return all windows", %{browser: browser} do
+      {:ok, %Window{} = window_1, browser} = Browser.new_window(browser)
       {:ok, %Window{} = window_2, browser} = Browser.new_window(browser)
 
       windows = Browser.windows!(browser)
@@ -51,8 +85,8 @@ defmodule Crane.BrowserTest do
       assert window_2 in windows
     end
 
-    test "will spawn a new window for the browser that is monitored by the browser" do
-      {:ok, %Window{} = window, browser} = Browser.new_window(%Browser{})
+    test "will spawn a new window for the browser that is monitored by the browser", %{browser: browser} do
+      {:ok, %Window{} = window, browser} = Browser.new_window(browser)
 
       window_name = Atom.to_string(window.name)
 
@@ -64,9 +98,80 @@ defmodule Crane.BrowserTest do
 
       :timer.sleep(10)
 
-      {:ok, browser} = Browser.get()
+      {:ok, browser} = Browser.get(browser)
 
       refute window_name in Map.values(browser.refs)
+    end
+  end
+
+  describe "close" do
+    test "will close a Bindow process" do
+      {:ok, browser} = Browser.new()
+
+      pid = Process.whereis(browser.name)
+
+      assert Process.alive?(pid)
+
+      :ok = Browser.close(browser)
+
+      refute Process.alive?(pid)
+    end
+
+    test "when browser closes all windows are closed too" do
+      {:ok, browser} = Browser.new()
+
+      {:ok, %Window{} = window_1, browser} = Browser.new_window(browser)
+      {:ok, %Window{} = window_2, browser} = Browser.new_window(browser)
+
+      window_1_pid = Process.whereis(window_1.name)
+      window_2_pid = Process.whereis(window_2.name)
+
+      :ok = Browser.close(browser)
+
+      :timer.sleep(10)
+
+      refute Process.alive?(window_1_pid)
+      refute Process.alive?(window_2_pid)
+    end
+  end
+
+  describe "restore_window" do
+    test "will restore a previously closed window state" do
+      {:ok, browser} = Browser.new()
+      {:ok, window, browser} = Browser.new_window(browser)
+      
+      Req.Test.stub(Window, fn(conn) ->
+        Plug.Conn.send_resp(conn, conn.status || 200, "<Text>Success!</Text>")
+      end)
+
+      Req.Test.allow(Window, self(), pid_for(window))
+
+      {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com")
+      old_pid = Process.whereis(window.name)
+
+      :ok = Window.close(window)
+
+      {:ok, restored_window, browser} = Browser.restore_window(browser, window)
+
+      assert window.name == restored_window.name
+      assert window.history == restored_window.history
+      assert window.response == restored_window.response
+      assert window.view_tree == restored_window.view_tree
+      assert restored_window.browser_name == browser.name
+
+      refute old_pid == Process.whereis(restored_window.name)
+
+      restored_window_name = Atom.to_string(window.name)
+      assert restored_window_name in Map.values(browser.refs)
+
+      pid = Process.whereis(window.name)
+      Process.exit(pid, :kill)
+
+      :timer.sleep(10)
+
+      {:ok, browser} = Browser.get(browser)
+
+      refute restored_window_name in Map.values(browser.refs)
     end
   end
 end

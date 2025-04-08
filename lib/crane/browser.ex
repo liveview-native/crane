@@ -1,6 +1,8 @@
 defmodule Crane.Browser do
   use GenServer
+
   alias HttpCookie.Jar
+  alias Crane.Browser.Window
   alias Crane.Protos
 
   import Crane.Utils
@@ -12,15 +14,17 @@ defmodule Crane.Browser do
     {"Upgrade-Insecure-Requests", "1"},
   ]
 
-  alias Crane.Browser.Window
-
   defstruct name: nil,
     refs: %{},
     headers: [],
     cookie_jar: Jar.new()
 
   def start_link(args) do
-    GenServer.start_link(__MODULE__, args, name: __MODULE__)
+    name = generate_name(:browser)
+
+    args = Keyword.put(args, :name, name)
+
+    GenServer.start_link(__MODULE__, args, name: name)
   end
 
   def init(args) do
@@ -29,9 +33,12 @@ defmodule Crane.Browser do
 
     {:ok, %__MODULE__{
       headers: @default_headers ++ headers,
-      name: generate_name(:browser)
+      name: args[:name] 
     }}
   end
+
+  def handle_call(:get, _from, browser),
+    do: {:reply, {:ok, browser}, browser}
 
   def handle_call({:get, %__MODULE__{headers: headers}}, _from, browser) do
     browser = %__MODULE__{browser | headers: browser.headers ++ headers}
@@ -49,13 +56,26 @@ defmodule Crane.Browser do
     {:reply, {:ok, windows}, browser}
   end
 
-  def handle_call({:new_window, window_state}, _from, %__MODULE__{name: name, refs: refs} = browser) do
-    with {:ok, window} <- Window.new(window_state),
+  def handle_call({:restore_window, %Window{} = window_state}, _from, %__MODULE__{name: name, refs: refs} = browser) do
+    with {:ok, window} <- Window.restore(window_state),
       refs <- monitor(window, refs) do
 
       browser = %__MODULE__{browser | refs: refs}
 
-      Phoenix.PubSub.broadcast(PhoenixPlayground.PubSub, Atom.to_string(name), :update)
+      broadcast(Atom.to_string(name), :update)
+      {:reply, {:ok, window, browser}, browser}
+    else
+      error -> {:reply, error, browser}
+    end
+  end
+
+  def handle_call(:new_window, _from, %__MODULE__{name: name, refs: refs} = browser) do
+    with {:ok, window} <- Window.new([browser: browser]),
+      refs <- monitor(window, refs) do
+
+      browser = %__MODULE__{browser | refs: refs}
+
+      broadcast(Atom.to_string(name), :update)
       {:reply, {:ok, window, browser}, browser}
     else
       error -> {:reply, error, browser}
@@ -67,7 +87,7 @@ defmodule Crane.Browser do
   end
 
   def handle_cast({:update_cookie_jar, cookie_jar}, %__MODULE__{name: name} = browser) do
-    Phoenix.PubSub.broadcast(PhoenixPlayground.PubSub, Atom.to_string(name), :update)
+    broadcast(Atom.to_string(name), :update)
     {:noreply, %__MODULE__{browser | cookie_jar: cookie_jar}}
   end
 
@@ -78,7 +98,7 @@ defmodule Crane.Browser do
   def handle_info({:DOWN, ref, :process, _pid, _reason}, %__MODULE__{name: name, refs: refs} = browser) do
     {_name, refs} = Map.pop(refs, ref)
 
-    Phoenix.PubSub.broadcast(PhoenixPlayground.PubSub, Atom.to_string(name), :update)
+    broadcast(Atom.to_string(name), :update)
     {:noreply, %__MODULE__{browser | refs: refs}}
   end
 
@@ -86,12 +106,12 @@ defmodule Crane.Browser do
     {:noreply, browser}
   end
 
-  def update_cookie_jar(cookie_jar) do
-    GenServer.cast(__MODULE__, {:update_cookie_jar, cookie_jar})
+  def update_cookie_jar(%__MODULE__{name: name}, cookie_jar) do
+    GenServer.cast(name, {:update_cookie_jar, cookie_jar})
   end
 
-  def windows(%__MODULE__{name: _name}) do
-    GenServer.call(__MODULE__, :windows)
+  def windows(%__MODULE__{name: name}) do
+    GenServer.call(name, :windows)
   end
 
   def windows!(browser) do
@@ -99,12 +119,35 @@ defmodule Crane.Browser do
     windows
   end
 
-  def new_window(%__MODULE__{name: _name}, window_state \\ %{}) when is_map(window_state) do
-    GenServer.call(__MODULE__, {:new_window, Map.put(window_state, :browser_name, __MODULE__)})
+  def restore_window(%__MODULE__{name: name}, %Window{} = window_state \\ %Window{}) do
+    GenServer.call(name, {:restore_window, %Window{window_state | browser_name: name}})
   end
 
-  def get(%__MODULE__{} = browser \\ %__MODULE__{}) do
-    GenServer.call(__MODULE__, {:get, browser})
+  def new_window(%__MODULE__{name: name}) do
+    GenServer.call(name, :new_window)
+  end
+
+  def new(state \\ []) when is_list(state) do
+    with {:ok, pid} <- start_link(state),
+      {:ok, browser} <- GenServer.call(pid, :get) do
+        {:ok, browser}
+    else
+      error -> {:error, error}
+    end
+  end
+
+  def close(%__MODULE__{name: name}) do
+    GenServer.stop(name, :normal)
+  end
+
+  def get(%__MODULE__{name: name}),
+    do: get(name)
+
+  def get(name) when is_binary(name),
+    do: get(String.to_existing_atom(name))
+
+  def get(name) when is_atom(name) do
+    GenServer.call(name, :get)
   end
 
   def to_proto(%__MODULE__{name: name, headers: headers, refs: refs} = _browser) do

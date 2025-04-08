@@ -8,6 +8,7 @@ option (elixirpb.file).module_prefix = "Crane.Protos";
 option swift_prefix = "Crane";
 
 service BrowserService {
+  rpc New(Empty) returns (Browser) {};
   rpc Get(Browser) returns (Browser) {};
   rpc CloseWindows(Browser) returns (Empty) {};
 }
