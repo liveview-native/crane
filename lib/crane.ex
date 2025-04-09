@@ -68,6 +68,11 @@ defmodule Crane do
     GenServer.call(__MODULE__, :new_browser)
   end
 
+  def new_browser! do
+    {:ok, browser} = new_browser()
+    browser
+  end
+
   def get do
     GenServer.call(__MODULE__, :get)
   end
