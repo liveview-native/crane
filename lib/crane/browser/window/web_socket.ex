@@ -157,6 +157,11 @@ defmodule Crane.Browser.Window.WebSocket do
     GenServer.call(name, :get)
   end
 
+  def get!(resource_or_name) do
+    {:ok, window} = get(resource_or_name)
+    window
+  end
+
   def attach_receiver(%__MODULE__{name: name}, receiver) when is_function(receiver) do
     GenServer.call(name, {:attach_receiver, receiver})
   end

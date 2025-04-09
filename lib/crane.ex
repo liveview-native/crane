@@ -20,11 +20,8 @@ defmodule Crane do
   end
 
   def handle_call(:browsers, _from, %__MODULE__{refs: refs} = crane) do
-    browsers = Enum.reduce(refs, [], fn
-      {_ref, "browser-" <> _id = name}, acc ->
-        {:ok, browser} = Crane.Browser.get(name)
-        [browser | acc]
-      _other, acc -> acc
+    browsers = get_reference_resource(refs, :browser, fn(name) ->
+      Browser.get(name)
     end)
     |> Enum.sort_by(&(&1.created_at), {:asc, DateTime})
 
@@ -72,6 +69,11 @@ defmodule Crane do
 
   def get do
     GenServer.call(__MODULE__, :get)
+  end
+
+  def get! do
+    {:ok, crane} = get()
+    crane
   end
 
   def browsers do

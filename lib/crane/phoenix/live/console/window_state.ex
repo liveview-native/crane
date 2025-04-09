@@ -1,6 +1,7 @@
 defmodule Crane.Phoenix.Live.Console.WindowState do
   defstruct active_tab: "Logs",
-    tab_state: %{}
+    tab_state: %{},
+    view_tree: []
 
   @behaviour Access
 

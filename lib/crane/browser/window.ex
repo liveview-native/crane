@@ -144,13 +144,10 @@ defmodule Crane.Browser.Window do
   end
 
   def handle_call(:sockets, _from, %__MODULE__{refs: refs} = window) do
-    sockets = Enum.reduce(refs, [], fn
-      {_ref, "socket-" <> _id = name}, acc ->
-        {:ok, socket} = Crane.Browser.Window.WebSocket.get(name)
-        [socket | acc]
-      _other, acc -> acc
+    sockets = get_reference_resource(refs, :socket, fn(name) ->
+      WebSocket.get(name)
     end)
-    |> Enum.sort_by(&(&1.created_at), :asc)
+    |> Enum.sort_by(&(&1.created_at), {:asc, DateTime})
 
     {:reply, {:ok, sockets}, window}
   end
@@ -206,6 +203,11 @@ defmodule Crane.Browser.Window do
 
   def get(name) when is_atom(name) do
     GenServer.call(name, :get)
+  end
+
+  def get!(resource_or_name) do
+    {:ok, window} = get(resource_or_name)
+    window
   end
 
   def fetch(%__MODULE__{name: name}, options) do

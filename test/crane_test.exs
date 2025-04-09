@@ -22,6 +22,10 @@ defmodule CraneTest do
       pid = Process.whereis(Crane)
       assert Process.alive?(pid)
     end
+
+    test "bang value will return without ok" do
+      %Crane{} = Crane.get!()
+    end
   end
 
   describe "close_browser" do
@@ -32,7 +36,7 @@ defmodule CraneTest do
       browser_1_pid = Process.whereis(browser_1.name)
       browser_2_pid = Process.whereis(browser_2.name)
 
-      assert Atom.to_string(browser_1.name) in Map.values(crane.refs)
+      assert browser_1.name in Map.values(crane.refs)
 
       {:ok, crane} = Crane.close_browser(browser_1)
 
@@ -41,8 +45,8 @@ defmodule CraneTest do
       refute Process.alive?(browser_1_pid)
       assert Process.alive?(browser_2_pid)
 
-      refute Atom.to_string(browser_1.name) in Map.values(crane.refs)
-      assert Atom.to_string(browser_2.name) in Map.values(crane.refs)
+      refute browser_1.name in Map.values(crane.refs)
+      assert browser_2.name in Map.values(crane.refs)
     end
   end
 end

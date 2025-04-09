@@ -17,6 +17,19 @@ defmodule Crane.Utils do
     end)
   end
 
+  def get_reference_resource(refs, type, func) do
+    type = Atom.to_string(type)
+
+    Enum.reduce(refs, [], fn({_ref, name}, acc) ->
+      case Atom.to_string(name) do
+        ^type <> "-" <> _id = name ->
+          {:ok, resource} = func.(name)
+          [resource | acc]
+        _other -> acc
+      end
+    end)
+  end
+
   def monitor(reffable, refs) do
     pid = Process.whereis(reffable.name)
     ref = Process.monitor(pid)
@@ -26,7 +39,12 @@ defmodule Crane.Utils do
     # is used frequently
     # If that balance ever changes this should change to
     # an atom by default
-    Map.put(refs, ref, Atom.to_string(reffable.name))
+    Map.put(refs, ref, reffable.name)
+  end
+
+  def demonitor(ref, refs) do
+    Process.demonitor(ref)
+    Map.delete(refs, ref)
   end
 
   def subscribe(topic) when is_atom(topic),
