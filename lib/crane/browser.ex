@@ -127,7 +127,7 @@ defmodule Crane.Browser do
     GenServer.call(name, :new_window)
   end
 
-  def close_window(%__MODULE__{name: name} = browser, %Window{} = window) do
+  def close_window(%__MODULE__{} = browser, %Window{} = window) do
     :ok = Window.close(window)
     get(browser)
   end

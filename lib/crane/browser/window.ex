@@ -2,13 +2,14 @@ defmodule Crane.Browser.Window do
   use GenServer
 
   alias Crane.Browser
-  alias Crane.Browser.Window.{History, ViewTree, WebSocket}
+  alias Crane.Browser.Window.{History, Logger, ViewTree, WebSocket}
   alias Crane.Protos
 
   import Crane.Utils
 
   defstruct name: nil,
     history: %History{},
+    logger: nil,
     browser_name: nil,
     view_tree: %ViewTree{},
     response: nil,
@@ -35,17 +36,22 @@ defmodule Crane.Browser.Window do
 
   @impl true
   def init(args) when is_list(args) do
-    Process.flag(:trap_exit, true)
-    {:ok, %__MODULE__{
+    window = %__MODULE__{
       name: args[:name],
       created_at: DateTime.now!("Etc/UTC"),
       browser_name: args[:browser].name
-    }}
+    }
+    {:ok, logger} = Logger.new(window: window)
+
+    Process.flag(:trap_exit, true)
+    {:ok, %__MODULE__{window | logger: logger}}
   end
 
   def init(state) when is_map(state) do
+    window = struct(__MODULE__, state)
+    {:ok, logger} = Logger.new(window: window)
     Process.flag(:trap_exit, true)
-    {:ok, struct(__MODULE__, state)}
+    {:ok, %__MODULE__{window | logger: logger}}
   end
 
   @impl true

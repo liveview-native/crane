@@ -42,7 +42,7 @@ defmodule Crane.Phoenix.Live.Console do
   end
 
   def handle_event("new_window", _params, socket) do
-    {:ok, window, browser} = Crane.Browser.new_window(socket.assigns.active_browser)
+    {:ok, window, _browser} = Crane.Browser.new_window(socket.assigns.active_browser)
 
     {:noreply, update_active_browser_state(socket, active_window: window)}
   end
@@ -54,7 +54,7 @@ defmodule Crane.Phoenix.Live.Console do
   end
 
   def handle_event("active_window", %{"window" => window_name}, socket) do
-    {:ok, window} = Crane.Browser.Window.get(window_name)
+    {:ok, window} = Window.get(window_name)
 
     {:noreply, update_active_browser_state(socket, active_window: window)}
   end
@@ -67,8 +67,8 @@ defmodule Crane.Phoenix.Live.Console do
   end
 
   def handle_event("close_window", %{"window" => window_name}, socket) do
-    {:ok, browser} = Crane.Browser.get(socket.assigns.active_browser)
-    {:ok, window} = Crane.Browser.Window.get(window_name)
+    {:ok, browser} = Browser.get(socket.assigns.active_browser)
+    {:ok, window} = Window.get(window_name)
     {:ok, _browser} = Crane.Browser.close_window(browser, window)
 
     {:noreply, socket}
@@ -105,7 +105,7 @@ defmodule Crane.Phoenix.Live.Console do
 
     active_browser = case browsers do
       [browser] -> browser
-      browsers -> socket.assigns.active_browser
+      _browsers -> socket.assigns.active_browser
     end
 
     {:noreply, assign(socket,
@@ -132,7 +132,7 @@ defmodule Crane.Phoenix.Live.Console do
 
     active_window = case windows do
       [window] -> window
-      windows -> browser_state.active_window
+      _windows -> browser_state.active_window
     end
 
     socket =
@@ -231,7 +231,7 @@ defmodule Crane.Phoenix.Live.Console do
   defp new_active(_list, _name, nil),
     do: nil
 
-  defp new_active(list, name, %{name: name} = resource) do
+  defp new_active(list, name, %{name: name}) do
     idx = Enum.find_index(list, &(name == &1.name))
     length = length(list)
 

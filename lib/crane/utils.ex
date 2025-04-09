@@ -47,6 +47,9 @@ defmodule Crane.Utils do
     Map.delete(refs, ref)
   end
 
+  def subscribe(%{name: topic}),
+    do: subscribe(topic)
+
   def subscribe(topic) when is_atom(topic),
     do: Atom.to_string(topic) |> subscribe()
 
@@ -55,6 +58,9 @@ defmodule Crane.Utils do
     Phoenix.PubSub.subscribe(pubsub, topic)
   end
 
+  def unsubscribe(%{name: topic}),
+    do: unsubscribe(topic)
+
   def unsubscribe(topic) when is_atom(topic),
     do: Atom.to_string(topic) |> unsubscribe()
 
@@ -62,6 +68,9 @@ defmodule Crane.Utils do
     pubsub = Application.get_env(:crane, :pubsub, PhoenixPlayground.PubSub)
     Phoenix.PubSub.unsubscribe(pubsub, topic)
   end
+
+  def broadcast(%{name: topic}, message),
+    do: broadcast(topic, message)
 
   def broadcast(topic, message) when is_atom(topic),
     do: Atom.to_string(topic) |> broadcast(message)

@@ -1,10 +1,7 @@
 defmodule Crane.Phoenix.Live.Console.HTML do
   use Phoenix.Component
 
-  alias Crane.{
-    Browser,
-    Browser.Window
-  }
+  alias Crane.Browser
 
   def render(assigns) do
     ~H"""
