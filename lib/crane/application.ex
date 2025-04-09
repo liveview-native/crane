@@ -1,11 +1,7 @@
 defmodule Crane.Application do
  use Application
 
-  @live_reload Application.compile_env(:phoenix_playground, :live_reload)
-
   def start(_type, _args) do
-    Application.put_env(:phoenix_playground, :plug, Crane.Phoenix.Router)
-
     live_reload = Application.get_env(:phoenix_playground, :live_reload)
 
     grpc_port = System.get_env("GRPC_PORT", "50051") |> make_integer()
