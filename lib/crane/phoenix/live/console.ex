@@ -101,8 +101,17 @@ defmodule Crane.Phoenix.Live.Console do
 
     browser_states = Map.put(socket.assigns.browser_states, browser.name, %BrowserState{})
 
+    browsers = Crane.browsers!()
+
+    active_browser = case browsers do
+      [browser] -> browser
+      browsers -> socket.assigns.active_browser
+    end
+
     {:noreply, assign(socket,
       refs: refs,
+      active_browser: active_browser,
+      browsers: Crane.browsers!(),
       browser_states: browser_states)
     }
   end
@@ -116,11 +125,19 @@ defmodule Crane.Phoenix.Live.Console do
       |> get_in([window.browser_name, :window_states])
       |> Map.put(window.name, %WindowState{})
 
+    browser_state = socket.assigns.browser_states[browser.name]
+
     browsers = Crane.browsers!()
+    windows = Browser.windows!(browser)
+
+    active_window = case windows do
+      [window] -> window
+      windows -> browser_state.active_window
+    end
 
     socket =
       socket
-      |> update_active_browser_state(window_states: window_states)
+      |> update_active_browser_state(active_window: active_window, window_states: window_states)
       |> assign(
         active_browser: update_if_active(browser.name, socket.assigns.active_browser),
         browsers: browsers,
@@ -147,7 +164,6 @@ defmodule Crane.Phoenix.Live.Console do
 
   defp down(socket, "window-" <> _id = name) do
     window_name = String.to_existing_atom(name)
-    IO.inspect({window_name, socket.assigns.browser_states})
     {browser_name, _browser_state} = Enum.find(socket.assigns.browser_states, fn({_name, browser_state}) ->
       window_name in Map.keys(browser_state.window_states)
     end)

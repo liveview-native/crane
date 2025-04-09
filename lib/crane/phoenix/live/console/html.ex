@@ -40,7 +40,7 @@ defmodule Crane.Phoenix.Live.Console.HTML do
       <button :for={browser <- @browsers} class={[
         "tab-button",
         "browser-tab",
-        @active_browser == browser && "active"
+        active?(@active_browser, browser) && "active"
       ]} phx-click="active_browser" phx-value-browser={browser.name}>
         <span class="close-tab-button" phx-click="close_browser" phx-value-browser={browser.name}>✕</span>
         {browser.name}
@@ -71,7 +71,7 @@ defmodule Crane.Phoenix.Live.Console.HTML do
       <button :for={window <- @windows} class={[
         "tab-button",
         "window-tab",
-        active_window?(@browser_state.active_window, window) && "active"
+        active?(@browser_state.active_window, window) && "active"
       ]} phx-click="active_window" phx-value-window={window.name}>
         <span class="close-tab-button" phx-click="close_window" phx-value-window={window.name}>✕</span>
         {window.name}
@@ -107,7 +107,7 @@ defmodule Crane.Phoenix.Live.Console.HTML do
         <button :for={tab <- ~w{Logs Network}} class={[
           "tab-button",
           "content-view-tab",
-          active_tab?(@window_state.active_tab, tab) && "active"
+          active?(@window_state.active_tab, tab) && "active"
         ]} phx-click="set_active_tab" phx-value-tab={tab}>{tab}</button>
       </div>
 
@@ -285,13 +285,10 @@ defmodule Crane.Phoenix.Live.Console.HTML do
     """
   end
 
-  defp active_tab?(active_tab, active_tab),
+  defp active?(%{name: name}, %{name: name}),
     do: true
-  defp active_tab?(_active_tab, _other),
-    do: false
-
-  defp active_window?(%Window{name: name}, %Window{name: name}),
+  defp active?(resource, resource),
     do: true
-  defp active_window?(_active_window, _window),
+  defp active?(_active_resource, _resource),
     do: false
 end
