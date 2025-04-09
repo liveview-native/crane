@@ -15,6 +15,7 @@ defmodule Crane.Browser.Window.WebSocket do
     ref: nil,
     websocket: nil,
     name: nil,
+    created_at: nil,
     receiver: nil
 
   def start_link(opts) when is_list(opts) do
@@ -42,6 +43,7 @@ defmodule Crane.Browser.Window.WebSocket do
         socket = %__MODULE__{
           conn: conn,
           ref: ref,
+          created_at: DateTime.now!("Etc/UTC"),
           websocket: websocket,
           window_name: opts[:window_name],
           name: opts[:name]
@@ -153,6 +155,11 @@ defmodule Crane.Browser.Window.WebSocket do
 
   def get(name) when is_atom(name) do
     GenServer.call(name, :get)
+  end
+
+  def get!(resource_or_name) do
+    {:ok, window} = get(resource_or_name)
+    window
   end
 
   def attach_receiver(%__MODULE__{name: name}, receiver) when is_function(receiver) do

@@ -1,11 +1,10 @@
 defmodule Crane.Browser do
   use GenServer
+  import Crane.Utils
 
   alias HttpCookie.Jar
   alias Crane.Browser.Window
   alias Crane.Protos
-
-  import Crane.Utils
 
   @default_headers [
     {"Accept-Encoding", "gzip, deflate, br, zstd"},
@@ -16,6 +15,7 @@ defmodule Crane.Browser do
 
   defstruct name: nil,
     refs: %{},
+    created_at: nil,
     headers: [],
     cookie_jar: Jar.new()
 
@@ -33,6 +33,7 @@ defmodule Crane.Browser do
 
     {:ok, %__MODULE__{
       headers: @default_headers ++ headers,
+      created_at: DateTime.now!("Etc/UTC"),
       name: args[:name] 
     }}
   end
@@ -46,12 +47,10 @@ defmodule Crane.Browser do
   end
 
   def handle_call(:windows, _from, %__MODULE__{refs: refs} = browser) do
-    windows = Enum.reduce(refs, [], fn
-      {_ref, "window-" <> _id = name}, acc ->
-        {:ok, window} = Crane.Browser.Window.get(name)
-        [window | acc]
-      _other, acc -> acc
+    windows = get_reference_resource(refs, :window, fn(name) ->
+      Window.get(name)
     end)
+    |> Enum.sort_by(&(&1.created_at), {:asc, DateTime})
 
     {:reply, {:ok, windows}, browser}
   end
@@ -62,7 +61,8 @@ defmodule Crane.Browser do
 
       browser = %__MODULE__{browser | refs: refs}
 
-      broadcast(Atom.to_string(name), :update)
+      broadcast(name, {:restore_window, window})
+
       {:reply, {:ok, window, browser}, browser}
     else
       error -> {:reply, error, browser}
@@ -75,7 +75,8 @@ defmodule Crane.Browser do
 
       browser = %__MODULE__{browser | refs: refs}
 
-      broadcast(Atom.to_string(name), :update)
+      broadcast(name, {:new_window, window, browser})
+
       {:reply, {:ok, window, browser}, browser}
     else
       error -> {:reply, error, browser}
@@ -87,7 +88,7 @@ defmodule Crane.Browser do
   end
 
   def handle_cast({:update_cookie_jar, cookie_jar}, %__MODULE__{name: name} = browser) do
-    broadcast(Atom.to_string(name), :update)
+    broadcast(name, {:update_cookie_jar, browser})
     {:noreply, %__MODULE__{browser | cookie_jar: cookie_jar}}
   end
 
@@ -95,10 +96,9 @@ defmodule Crane.Browser do
     {:noreply, browser}
   end
 
-  def handle_info({:DOWN, ref, :process, _pid, _reason}, %__MODULE__{name: name, refs: refs} = browser) do
+  def handle_info({:DOWN, ref, :process, _pid, _reason}, %__MODULE__{refs: refs} = browser) do
     {_name, refs} = Map.pop(refs, ref)
 
-    broadcast(Atom.to_string(name), :update)
     {:noreply, %__MODULE__{browser | refs: refs}}
   end
 
@@ -127,6 +127,11 @@ defmodule Crane.Browser do
     GenServer.call(name, :new_window)
   end
 
+  def close_window(%__MODULE__{} = browser, %Window{} = window) do
+    :ok = Window.close(window)
+    get(browser)
+  end
+
   def new(state \\ []) when is_list(state) do
     with {:ok, pid} <- start_link(state),
       {:ok, browser} <- GenServer.call(pid, :get) do
@@ -148,6 +153,11 @@ defmodule Crane.Browser do
 
   def get(name) when is_atom(name) do
     GenServer.call(name, :get)
+  end
+
+  def get!(resource_or_name) do
+    {:ok, window} = get(resource_or_name)
+    window
   end
 
   def to_proto(%__MODULE__{name: name, headers: headers, refs: refs} = _browser) do

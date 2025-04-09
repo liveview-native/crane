@@ -51,6 +51,12 @@ defmodule Crane.BrowserTest do
 
       assert browser == got_browser
     end
+
+    test "bang value will return without ok", %{browser: browser} do
+      got_browser = Browser.get!(%Browser{name: browser.name})
+
+      assert browser == got_browser
+    end
   end
 
   describe "windows" do
@@ -88,9 +94,7 @@ defmodule Crane.BrowserTest do
     test "will spawn a new window for the browser that is monitored by the browser", %{browser: browser} do
       {:ok, %Window{} = window, browser} = Browser.new_window(browser)
 
-      window_name = Atom.to_string(window.name)
-
-      assert window_name in Map.values(browser.refs)
+      assert window.name in Map.values(browser.refs)
       assert window.history.index == -1
 
       pid = Process.whereis(window.name)
@@ -100,12 +104,12 @@ defmodule Crane.BrowserTest do
 
       {:ok, browser} = Browser.get(browser)
 
-      refute window_name in Map.values(browser.refs)
+      refute window.name in Map.values(browser.refs)
     end
   end
 
   describe "close" do
-    test "will close a Bindow process" do
+    test "will close a Browser process" do
       {:ok, browser} = Browser.new()
 
       pid = Process.whereis(browser.name)
@@ -135,6 +139,30 @@ defmodule Crane.BrowserTest do
     end
   end
 
+  describe "close_window" do
+    test "will close all windows and return updated browser" do
+      {:ok, browser} = Browser.new()
+
+      {:ok, %Window{} = window_1, browser} = Browser.new_window(browser)
+      {:ok, %Window{} = window_2, browser} = Browser.new_window(browser)
+
+      window_1_pid = Process.whereis(window_1.name)
+      window_2_pid = Process.whereis(window_2.name)
+
+      assert window_1.name in Map.values(browser.refs)
+
+      {:ok, browser} = Browser.close_window(browser, window_1)
+
+      :timer.sleep(10)
+
+      refute Process.alive?(window_1_pid)
+      assert Process.alive?(window_2_pid)
+
+      refute window_1.name in Map.values(browser.refs)
+      assert window_2.name in Map.values(browser.refs)
+    end
+  end
+
   describe "restore_window" do
     test "will restore a previously closed window state" do
       {:ok, browser} = Browser.new()
@@ -161,8 +189,7 @@ defmodule Crane.BrowserTest do
 
       refute old_pid == Process.whereis(restored_window.name)
 
-      restored_window_name = Atom.to_string(window.name)
-      assert restored_window_name in Map.values(browser.refs)
+      assert restored_window.name in Map.values(browser.refs)
 
       pid = Process.whereis(window.name)
       Process.exit(pid, :kill)
@@ -171,7 +198,7 @@ defmodule Crane.BrowserTest do
 
       {:ok, browser} = Browser.get(browser)
 
-      refute restored_window_name in Map.values(browser.refs)
+      refute restored_window.name in Map.values(browser.refs)
     end
   end
 end

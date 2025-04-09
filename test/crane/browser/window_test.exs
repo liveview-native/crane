@@ -30,6 +30,26 @@ defmodule Crane.Browser.WindowTest do
     end
   end
 
+  describe "get" do
+    setup do
+      {:ok, browser} = Browser.new()
+      {:ok, window_pid} = Window.start_link(browser: browser)
+      {:ok, window} = GenServer.call(window_pid, :get)
+
+      {:ok, window: window}
+    end
+
+    test "will return the window struct", %{window: window} do
+      {:ok, %Window{} = got_window} = Window.get(%Window{name: window.name})
+      assert window == got_window
+    end
+
+    test "bang value will return without ok", %{window: window} do
+      got_window = Window.get!(%Window{name: window.name})
+      assert window == got_window
+    end
+  end
+
   describe "close" do
     test "will close a Window process", %{browser: browser} do
       {:ok, window} = Window.new(browser: browser)
@@ -251,9 +271,7 @@ defmodule Crane.Browser.WindowTest do
       {:ok, %WebSocket{} = socket, window} = Window.new_socket(window, url: "http://localhost:4567/websocket")
       {:ok, window} = Window.get(window)
 
-      socket_name = Atom.to_string(socket.name)
-
-      assert socket_name in Map.values(window.refs)
+      assert socket.name in Map.values(window.refs)
 
       pid = Process.whereis(socket.name)
       Process.exit(pid, :kill)
@@ -262,7 +280,7 @@ defmodule Crane.Browser.WindowTest do
 
       {:ok, window} = Window.get(window)
 
-      refute socket_name in Map.values(window.refs)
+      refute socket.name in Map.values(window.refs)
     end
   end
 end

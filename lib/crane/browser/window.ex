@@ -2,16 +2,18 @@ defmodule Crane.Browser.Window do
   use GenServer
 
   alias Crane.Browser
-  alias Crane.Browser.Window.{History, ViewTree, WebSocket}
+  alias Crane.Browser.Window.{History, Logger, ViewTree, WebSocket}
   alias Crane.Protos
 
   import Crane.Utils
 
   defstruct name: nil,
     history: %History{},
+    logger: nil,
     browser_name: nil,
     view_tree: %ViewTree{},
     response: nil,
+    created_at: nil,
     refs: %{}
 
   def start_link(args) when is_list(args) do
@@ -34,16 +36,22 @@ defmodule Crane.Browser.Window do
 
   @impl true
   def init(args) when is_list(args) do
-    Process.flag(:trap_exit, true)
-    {:ok, %__MODULE__{
+    window = %__MODULE__{
       name: args[:name],
+      created_at: DateTime.now!("Etc/UTC"),
       browser_name: args[:browser].name
-    }}
+    }
+    {:ok, logger} = Logger.new(window: window)
+
+    Process.flag(:trap_exit, true)
+    {:ok, %__MODULE__{window | logger: logger}}
   end
 
   def init(state) when is_map(state) do
+    window = struct(__MODULE__, state)
+    {:ok, logger} = Logger.new(window: window)
     Process.flag(:trap_exit, true)
-    {:ok, struct(__MODULE__, state)}
+    {:ok, %__MODULE__{window | logger: logger}}
   end
 
   @impl true
@@ -75,7 +83,7 @@ defmodule Crane.Browser.Window do
 
         :ok = Browser.update_cookie_jar(browser, cookie_jar)
 
-        broadcast(Atom.to_string(window.name), :update)
+        broadcast(window.name, {:fetch, window, response})
         {:reply, {:ok, response, window}, window}
 
       {:error, invalid_options} ->
@@ -130,7 +138,7 @@ defmodule Crane.Browser.Window do
       {:ok, socket} <- WebSocket.new(window, options) do
         refs = monitor(socket, refs)
         window = %__MODULE__{window | refs: refs}
-        broadcast(Atom.to_string(name), :update)
+        broadcast(name, {:new_socket, window, socket})
 
         {:reply, {:ok, socket, window}, window}
     else
@@ -142,12 +150,10 @@ defmodule Crane.Browser.Window do
   end
 
   def handle_call(:sockets, _from, %__MODULE__{refs: refs} = window) do
-    sockets = Enum.reduce(refs, [], fn
-      {_ref, "socket-" <> _id = name}, acc ->
-        {:ok, socket} = Crane.Browser.Window.WebSocket.get(name)
-        [socket | acc]
-      _other, acc -> acc
+    sockets = get_reference_resource(refs, :socket, fn(name) ->
+      WebSocket.get(name)
     end)
+    |> Enum.sort_by(&(&1.created_at), {:asc, DateTime})
 
     {:reply, {:ok, sockets}, window}
   end
@@ -160,12 +166,11 @@ defmodule Crane.Browser.Window do
   end
 
   @impl true
-  def handle_info({:DOWN, ref, :process, _pid, _reason}, %__MODULE__{name: name, refs: refs} = window) do
+  def handle_info({:DOWN, ref, :process, _pid, _reason}, %__MODULE__{refs: refs} = window) do
     case Map.pop(refs, ref) do
       {nil, _refs} ->
         {:noreply, window}
       {_name, refs} -> 
-        broadcast(Atom.to_string(name), :update)
         {:noreply, %__MODULE__{window | refs: refs}}
     end
   end
@@ -204,6 +209,11 @@ defmodule Crane.Browser.Window do
 
   def get(name) when is_atom(name) do
     GenServer.call(name, :get)
+  end
+
+  def get!(resource_or_name) do
+    {:ok, window} = get(resource_or_name)
+    window
   end
 
   def fetch(%__MODULE__{name: name}, options) do
