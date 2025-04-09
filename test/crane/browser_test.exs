@@ -105,7 +105,7 @@ defmodule Crane.BrowserTest do
   end
 
   describe "close" do
-    test "will close a Bindow process" do
+    test "will close a Browser process" do
       {:ok, browser} = Browser.new()
 
       pid = Process.whereis(browser.name)
@@ -132,6 +132,30 @@ defmodule Crane.BrowserTest do
 
       refute Process.alive?(window_1_pid)
       refute Process.alive?(window_2_pid)
+    end
+  end
+
+  describe "close_window" do
+    test "will close all windows and return updated browser" do
+      {:ok, browser} = Browser.new()
+
+      {:ok, %Window{} = window_1, browser} = Browser.new_window(browser)
+      {:ok, %Window{} = window_2, browser} = Browser.new_window(browser)
+
+      window_1_pid = Process.whereis(window_1.name)
+      window_2_pid = Process.whereis(window_2.name)
+
+      assert Atom.to_string(window_1.name) in Map.values(browser.refs)
+
+      {:ok, browser} = Browser.close_window(browser, window_1)
+
+      :timer.sleep(10)
+
+      refute Process.alive?(window_1_pid)
+      assert Process.alive?(window_2_pid)
+
+      refute Atom.to_string(window_1.name) in Map.values(browser.refs)
+      assert Atom.to_string(window_2.name) in Map.values(browser.refs)
     end
   end
 

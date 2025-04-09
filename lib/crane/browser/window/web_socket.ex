@@ -15,6 +15,7 @@ defmodule Crane.Browser.Window.WebSocket do
     ref: nil,
     websocket: nil,
     name: nil,
+    created_at: nil,
     receiver: nil
 
   def start_link(opts) when is_list(opts) do
@@ -42,6 +43,7 @@ defmodule Crane.Browser.Window.WebSocket do
         socket = %__MODULE__{
           conn: conn,
           ref: ref,
+          created_at: DateTime.now!("Etc/UTC"),
           websocket: websocket,
           window_name: opts[:window_name],
           name: opts[:name]

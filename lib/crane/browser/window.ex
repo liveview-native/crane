@@ -12,6 +12,7 @@ defmodule Crane.Browser.Window do
     browser_name: nil,
     view_tree: %ViewTree{},
     response: nil,
+    created_at: nil,
     refs: %{}
 
   def start_link(args) when is_list(args) do
@@ -37,6 +38,7 @@ defmodule Crane.Browser.Window do
     Process.flag(:trap_exit, true)
     {:ok, %__MODULE__{
       name: args[:name],
+      created_at: DateTime.now!("Etc/UTC"),
       browser_name: args[:browser].name
     }}
   end
@@ -75,7 +77,7 @@ defmodule Crane.Browser.Window do
 
         :ok = Browser.update_cookie_jar(browser, cookie_jar)
 
-        broadcast(Atom.to_string(window.name), :update)
+        broadcast(window.name, {:fetch, window, response})
         {:reply, {:ok, response, window}, window}
 
       {:error, invalid_options} ->
@@ -130,7 +132,7 @@ defmodule Crane.Browser.Window do
       {:ok, socket} <- WebSocket.new(window, options) do
         refs = monitor(socket, refs)
         window = %__MODULE__{window | refs: refs}
-        broadcast(Atom.to_string(name), :update)
+        broadcast(name, {:new_socket, window, socket})
 
         {:reply, {:ok, socket, window}, window}
     else
@@ -148,6 +150,7 @@ defmodule Crane.Browser.Window do
         [socket | acc]
       _other, acc -> acc
     end)
+    |> Enum.sort_by(&(&1.created_at), :asc)
 
     {:reply, {:ok, sockets}, window}
   end
@@ -160,12 +163,11 @@ defmodule Crane.Browser.Window do
   end
 
   @impl true
-  def handle_info({:DOWN, ref, :process, _pid, _reason}, %__MODULE__{name: name, refs: refs} = window) do
+  def handle_info({:DOWN, ref, :process, _pid, _reason}, %__MODULE__{refs: refs} = window) do
     case Map.pop(refs, ref) do
       {nil, _refs} ->
         {:noreply, window}
       {_name, refs} -> 
-        broadcast(Atom.to_string(name), :update)
         {:noreply, %__MODULE__{window | refs: refs}}
     end
   end

@@ -29,10 +29,24 @@ defmodule Crane.Utils do
     Map.put(refs, ref, Atom.to_string(reffable.name))
   end
 
-  def subscribe(topic) do
+  def subscribe(topic) when is_atom(topic),
+    do: Atom.to_string(topic) |> subscribe()
+
+  def subscribe(topic) do 
     pubsub = Application.get_env(:crane, :pubsub, PhoenixPlayground.PubSub)
     Phoenix.PubSub.subscribe(pubsub, topic)
   end
+
+  def unsubscribe(topic) when is_atom(topic),
+    do: Atom.to_string(topic) |> unsubscribe()
+
+  def unsubscribe(topic) do
+    pubsub = Application.get_env(:crane, :pubsub, PhoenixPlayground.PubSub)
+    Phoenix.PubSub.unsubscribe(pubsub, topic)
+  end
+
+  def broadcast(topic, message) when is_atom(topic),
+    do: Atom.to_string(topic) |> broadcast(message)
 
   def broadcast(topic, message) do
     pubsub = Application.get_env(:crane, :pubsub, PhoenixPlayground.PubSub)
