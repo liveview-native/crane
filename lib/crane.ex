@@ -95,4 +95,12 @@ defmodule Crane do
     :ok = Browser.close(browser)
     get()
   end
+
+  def launch(options) do
+    with {:ok, browser, _crane} <- new_browser(),
+      {:ok, window, browser} <- Crane.Browser.new_window(browser),
+      {:ok, response, window} <- Crane.Browser.Window.visit(window, options) do
+        {:ok, window, browser}
+    end
+  end
 end
