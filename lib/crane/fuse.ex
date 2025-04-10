@@ -16,7 +16,7 @@ defmodule Crane.Fuse do
       "error" => lifecycle_template(view_tree, "error")
     }
 
-    %{
+   %{
       view_trees: view_trees,
       stylesheets: stylesheets
     }
