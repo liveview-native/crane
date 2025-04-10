@@ -49,7 +49,7 @@ defmodule Crane.MixProject do
       {:websockex, "~> 0.4"},
       {:http_cookie, "~> 0.7"},
       {:public_suffix, github: "axelson/publicsuffix-elixir"},
-      {:live_view_native, "~> 0.4.0-rc.1"},
+      {:live_view_native, github: "liveview-native/live_view_native"},
       {:test_server, "~> 0.1", only: :test},
       {:bandit, "~> 1.0"},
       {:cdpotion, "~> 0.1.0"},
