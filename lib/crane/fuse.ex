@@ -2,7 +2,10 @@ defmodule Crane.Fuse do
   alias Req.Response
 
   def run_middleware(:visit, %Response{status: 200, body: body}) do
-    {:ok, view_tree} = LiveViewNative.Template.Parser.parse_document(body, inject_identity: true)
+    {:ok, view_tree} = LiveViewNative.Template.Parser.parse_document(body,
+      skip_comments: true,
+      text_as_nodes: true,
+      inject_identity: true)
 
     stylesheets = Floki.find(view_tree, "Style") |> Floki.attribute("url")
 
