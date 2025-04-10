@@ -4,7 +4,6 @@ defmodule Crane.Browser do
 
   alias HttpCookie.Jar
   alias Crane.Browser.Window
-  alias Crane.Protos
 
   @default_headers [
     {"Accept-Encoding", "gzip, deflate, br, zstd"},
@@ -163,20 +162,5 @@ defmodule Crane.Browser do
   def get!(resource_or_name) do
     {:ok, window} = get(resource_or_name)
     window
-  end
-
-  def to_proto(%__MODULE__{name: name, headers: headers, refs: refs} = _browser) do
-    headers = Enum.map(headers, &to_proto(&1))
-    windows = get_reference_names(refs, :window)
-
-    %Protos.Browser{name: Atom.to_string(name), headers: headers, windows: windows}
-  end
-
-  def to_proto({name, %Window{} = window}) do
-    {name, Window.to_proto(window)}
-  end
-
-  def to_proto({name, value}) do
-    %Protos.Browser.Header{name: name, value: value}
   end
 end

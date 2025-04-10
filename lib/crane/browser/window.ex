@@ -3,7 +3,6 @@ defmodule Crane.Browser.Window do
 
   alias Crane.{
     Browser,
-    Protos,
     Fuse
   }
   alias Crane.Browser.Window.{
@@ -261,13 +260,5 @@ defmodule Crane.Browser.Window do
   def sockets!(window) do
     {:ok, sockets} = sockets(window)
     sockets
-  end
-
-  def to_proto(%__MODULE__{name: name, refs: refs, browser_name: browser_name}) do
-    %Protos.Browser.Window{
-      name: Atom.to_string(name),
-      browser_name: Atom.to_string(browser_name),
-      sockets: get_reference_names(refs, :socket)
-    }
   end
 end

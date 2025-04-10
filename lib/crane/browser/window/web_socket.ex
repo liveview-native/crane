@@ -2,7 +2,6 @@ defmodule Crane.Browser.Window.WebSocket do
   use GenServer
 
   alias Crane.{
-    Protos,
     Browser.Window
   }
 
@@ -164,12 +163,5 @@ defmodule Crane.Browser.Window.WebSocket do
 
   def attach_receiver(%__MODULE__{name: name}, receiver) when is_function(receiver) do
     GenServer.call(name, {:attach_receiver, receiver})
-  end
-
-  def to_protoc(%__MODULE__{} = web_socket) do
-    %Protos.Browser.Window.Socket{
-      name: Atom.to_string(web_socket.name),
-      window_name: Atom.to_string(web_socket.window_name)
-    }
   end
 end
