@@ -7,8 +7,8 @@ defmodule Crane.Application do
     phx_port = System.get_env("PHX_PORT", "4000") |> make_integer()
 
     children = [
+      {PhoenixPlayground, plug: Crane.Phoenix.Router, live_reload: live_reload, open_browser: false, ip: {0, 0, 0, 0}, port: phx_port},
       {Crane, []},
-      {PhoenixPlayground, plug: Crane.Phoenix.Router, live_reload: live_reload, open_browser: false, ip: {0, 0, 0, 0}, port: phx_port}
     ]
 
     opts = [strategy: :one_for_one, name: __MODULE__]
