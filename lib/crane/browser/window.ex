@@ -1,9 +1,19 @@
 defmodule Crane.Browser.Window do
   use GenServer
 
-  alias Crane.Browser
-  alias Crane.Browser.Window.{History, Logger, ViewTree, WebSocket}
-  alias Crane.Protos
+  alias Crane.{
+    Browser,
+    Protos,
+    Fuse
+  }
+  alias Crane.Browser.Window.{
+    History,
+    Logger,
+    WebSocket
+  }
+  # alias Crane.Browser
+  # alias Crane.Browser.Window.{History, Logger, ViewTree, WebSocket}
+  # alias Crane.Protos
 
   import Crane.Utils
 
@@ -11,7 +21,8 @@ defmodule Crane.Browser.Window do
     history: %History{},
     logger: nil,
     browser_name: nil,
-    view_tree: %ViewTree{},
+    view_trees: %{},
+    stylesheets: [],
     response: nil,
     created_at: nil,
     refs: %{}
@@ -112,7 +123,9 @@ defmodule Crane.Browser.Window do
             _error ->  window.history
           end
 
-        window = %{window | history: history, response: response}
+        window =
+          %{window | history: history, response: response}
+          |> Map.merge(Fuse.run_middleware(:visit, response))
 
         {:reply, {:ok, response, window}, window}
 

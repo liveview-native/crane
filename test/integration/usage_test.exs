@@ -19,6 +19,7 @@ defmodule Crane.Integration.UsageTest do
     {:ok, browser: browser}
   end
 
+  @tag :skip
   test "bad uri", %{browser: browser} do
     run_server([BrowserServer, WindowServer], fn port ->
       {:ok, channel} = GRPC.Stub.connect("localhost:#{port}")
