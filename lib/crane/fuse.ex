@@ -3,7 +3,7 @@ defmodule Crane.Fuse do
 
   def run_middleware(:visit, %Response{status: 200, body: body}) do
     {:ok, view_tree} = LiveViewNative.Template.Parser.parse_document(body,
-      skip_comments: true,
+      strip_comments: true,
       text_as_node: true,
       inject_identity: true)
 
