@@ -70,7 +70,7 @@ defmodule Crane.Browser.Window.WebSocket do
     {:reply, {:ok, socket}, socket}
   end
 
-  def handle_call({:attach_receiver, receiver}, _from, socket) when is_function(receiver) do
+  def handle_call({:attach_receiver, receiver}, _from, socket) do
     {:reply, :ok, %__MODULE__{socket | receiver: receiver}}
   end
 
@@ -100,7 +100,7 @@ defmodule Crane.Browser.Window.WebSocket do
     {:ok, websocket, msg} = Mint.WebSocket.decode(websocket, data)
 
     if receiver do
-      receiver.(msg)
+      Kernel.send(receiver, msg)
     end
 
     {:noreply, %__MODULE__{socket | websocket: websocket, conn: conn}}
@@ -160,7 +160,7 @@ defmodule Crane.Browser.Window.WebSocket do
     window
   end
 
-  def attach_receiver(%__MODULE__{name: name}, receiver) when is_function(receiver) do
+  def attach_receiver(%__MODULE__{name: name}, receiver) do
     GenServer.call(name, {:attach_receiver, receiver})
   end
 end
