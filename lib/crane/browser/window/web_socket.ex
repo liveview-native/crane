@@ -32,7 +32,7 @@ defmodule Crane.Browser.Window.WebSocket do
 
     scheme = String.to_atom(uri.scheme)
 
-    with {:ok, opts} = Keyword.validate(opts, [url: nil, headers: [], window_name: nil, name: nil]),
+    with {:ok, opts} = Keyword.validate(opts, [url: nil, headers: [], window_name: nil, name: nil, receiver: nil]),
       {:ok, conn} <- Mint.HTTP1.connect(scheme, uri.host, uri.port),
       {:ok, conn, ref} <- Mint.WebSocket.upgrade(ws_scheme(scheme), conn, ws_path(uri.path), opts[:headers]),
       http_reply_message <- receive(do: (message -> message)),
