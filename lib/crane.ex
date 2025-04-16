@@ -63,6 +63,10 @@ defmodule Crane do
     {:noreply, browser}
   end
 
+  def reconnect do
+    GenServer.cast(__MODULE__, :reconnect)
+  end
+
   def new_browser do
     GenServer.call(__MODULE__, :new_browser)
   end
