@@ -13,11 +13,7 @@ defmodule Crane.Browser.Window.WebSocketTest do
 
       pid = self()
 
-      receiver = fn(msg) ->
-        send(pid, msg)
-      end
-
-      :ok = WebSocket.attach_receiver(socket, receiver)
+      :ok = WebSocket.attach_receiver(socket, pid)
       WebSocket.send(socket, {:text, "ping"})
 
       assert_receive [{:text, "pong"}]
