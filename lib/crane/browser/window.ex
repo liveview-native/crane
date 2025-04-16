@@ -149,7 +149,7 @@ defmodule Crane.Browser.Window do
   end
 
   def handle_call({:new_socket, options}, _from, %__MODULE__{refs: refs} = window) do
-    with {:ok, options} <- Keyword.validate(options, [url: nil, headers: [], window_name: nil]),
+    with {:ok, options} <- Keyword.validate(options, [url: nil, headers: [], window_name: nil, receiver: nil]),
       {_, options} <- normalize_options(options),
       {:ok, socket} <- WebSocket.new(window, options) do
         refs = monitor(socket, refs)
