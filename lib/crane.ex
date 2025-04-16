@@ -32,7 +32,6 @@ defmodule Crane do
     with {:ok, browser} <- Browser.new(),
       refs <- monitor(browser, refs) do
         crane = %__MODULE__{crane | refs: refs}
-        IO.puts("***CRANE NEW BROWSER***")
         broadcast(Crane, {:new_browser, browser})
 
         {:reply, {:ok, browser, crane}, crane}

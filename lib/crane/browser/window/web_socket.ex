@@ -45,7 +45,8 @@ defmodule Crane.Browser.Window.WebSocket do
           created_at: DateTime.now!("Etc/UTC"),
           websocket: websocket,
           window_name: opts[:window_name],
-          name: opts[:name]
+          name: opts[:name],
+          receiver: opts[:receiver]
         } 
 
         {:ok, socket}
