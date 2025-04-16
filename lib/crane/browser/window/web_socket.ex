@@ -100,8 +100,6 @@ defmodule Crane.Browser.Window.WebSocket do
 
     if receiver do
       receiver.(msg)
-    else
-      IO.inspect(msg, label: "Unhandled message received")
     end
 
     {:noreply, %__MODULE__{socket | websocket: websocket, conn: conn}}

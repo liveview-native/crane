@@ -54,13 +54,13 @@ defmodule Crane.Browser do
     {:reply, {:ok, windows}, browser}
   end
 
-  def handle_call({:restore_window, %Window{} = window_state}, _from, %__MODULE__{name: name, refs: refs} = browser) do
+  def handle_call({:restore_window, %Window{} = window_state}, _from, %__MODULE__{refs: refs} = browser) do
     with {:ok, window} <- Window.restore(window_state),
       refs <- monitor(window, refs) do
 
       browser = %__MODULE__{browser | refs: refs}
 
-      broadcast(name, {:restore_window, window})
+      broadcast(Crane, {:restore_window, window, browser})
 
       {:reply, {:ok, window, browser}, browser}
     else
@@ -68,13 +68,13 @@ defmodule Crane.Browser do
     end
   end
 
-  def handle_call(:new_window, _from, %__MODULE__{name: name, refs: refs} = browser) do
+  def handle_call(:new_window, _from, %__MODULE__{refs: refs} = browser) do
     with {:ok, window} <- Window.new([browser: browser]),
       refs <- monitor(window, refs) do
 
       browser = %__MODULE__{browser | refs: refs}
 
-      broadcast(name, {:new_window, window, browser})
+      broadcast(Crane, {:new_window, window, browser})
 
       {:reply, {:ok, window, browser}, browser}
     else
@@ -86,8 +86,8 @@ defmodule Crane.Browser do
     {:noreply, browser}
   end
 
-  def handle_cast({:update_cookie_jar, cookie_jar}, %__MODULE__{name: name} = browser) do
-    broadcast(name, {:update_cookie_jar, browser})
+  def handle_cast({:update_cookie_jar, cookie_jar}, browser) do
+    broadcast(Crane, {:update, browser})
     {:noreply, %__MODULE__{browser | cookie_jar: cookie_jar}}
   end
 
@@ -126,14 +126,27 @@ defmodule Crane.Browser do
     GenServer.call(name, :new_window)
   end
 
-  def new_window!(browser) do
-    {:ok, window} = new_window(browser)
+  def new_window(name) when is_binary(name) do
+    new_window(String.to_existing_atom(name))
+  end
+
+  def new_window(name) when is_atom(name) do
+    new_window(%__MODULE__{name: name})
+  end
+
+  def new_window!(browser_or_name) do
+    {:ok, window} = new_window(browser_or_name)
     window
   end
 
   def close_window(%__MODULE__{} = browser, %Window{} = window) do
     :ok = Window.close(window)
     get(browser)
+  end
+
+  def close_window(browser_name, window_name) do
+    :ok = Window.close(window_name)
+    get(browser_name)
   end
 
   def new(state \\ []) when is_list(state) do

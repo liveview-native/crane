@@ -31,11 +31,11 @@ defmodule Crane do
   def handle_call(:new_browser, _from, %__MODULE__{refs: refs} = crane) do
     with {:ok, browser} <- Browser.new(),
       refs <- monitor(browser, refs) do
+        crane = %__MODULE__{crane | refs: refs}
+        IO.puts("***CRANE NEW BROWSER***")
+        broadcast(Crane, {:new_browser, browser})
 
-      crane = %__MODULE__{crane | refs: refs}
-
-      broadcast(Crane, {:new_browser, browser})
-      {:reply, {:ok, browser, crane}, crane}
+        {:reply, {:ok, browser, crane}, crane}
     else
       error -> {:reply, error, crane}
     end

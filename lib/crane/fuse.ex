@@ -10,10 +10,12 @@ defmodule Crane.Fuse do
     stylesheets = Floki.find(view_tree, "Style") |> Floki.attribute("url")
 
     view_trees = %{
-      "body" => Floki.find(view_tree, "body > *"),
-      "disconnected" => lifecycle_template(view_tree, "disconnected"),
-      "reconnecting" => lifecycle_template(view_tree, "reconnecting"),
-      "error" => lifecycle_template(view_tree, "error")
+      document: view_tree,
+      body: Floki.find(view_tree, "body > *"),
+      loading: lifecycle_template(view_tree, "loading"),
+      disconnected: lifecycle_template(view_tree, "disconnected"),
+      reconnecting: lifecycle_template(view_tree, "reconnecting"),
+      error: lifecycle_template(view_tree, "error")
     }
 
    %{

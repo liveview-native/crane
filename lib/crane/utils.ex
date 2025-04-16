@@ -55,7 +55,7 @@ defmodule Crane.Utils do
 
   def subscribe(topic) do 
     pubsub = Application.get_env(:crane, :pubsub, PhoenixPlayground.PubSub)
-    Phoenix.PubSub.subscribe(pubsub, topic)
+    :ok = Phoenix.PubSub.subscribe(pubsub, topic)
   end
 
   def unsubscribe(%{name: topic}),
@@ -66,7 +66,7 @@ defmodule Crane.Utils do
 
   def unsubscribe(topic) do
     pubsub = Application.get_env(:crane, :pubsub, PhoenixPlayground.PubSub)
-    Phoenix.PubSub.unsubscribe(pubsub, topic)
+    :ok = Phoenix.PubSub.unsubscribe(pubsub, topic)
   end
 
   def broadcast(%{name: topic}, message),
@@ -77,6 +77,6 @@ defmodule Crane.Utils do
 
   def broadcast(topic, message) do
     pubsub = Application.get_env(:crane, :pubsub, PhoenixPlayground.PubSub)
-    Phoenix.PubSub.broadcast(pubsub, topic, message)
+    :ok = Phoenix.PubSub.broadcast(pubsub, topic, message)
   end
 end

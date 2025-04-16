@@ -53,6 +53,8 @@ defmodule Crane.MixProject do
       {:test_server, "~> 0.1", only: :test},
       {:bandit, "~> 1.0"},
       {:cdpotion, "~> 0.1.0"},
+      # {:live_debugger, "~> 0.1.4", only: :dev},
+      {:live_debugger, path: "../live-debugger", only: :dev},
 
       {:elixirkit, github: "liveview-native/elixirkit", branch: "main"},
 

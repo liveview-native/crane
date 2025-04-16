@@ -9,23 +9,23 @@ defmodule Crane.Phoenix.Live.Console.HTML do
       "devtools-container",
       !@dark_theme && "light-theme"
     ]}>
-      <.browser_panel
+      <.browser_pane
         :let={browser_state}
         browser_states={@browser_states}
         browsers={@browsers}
         active_browser={@active_browser}
       >
-        <.window_panel :let={{window_state, active_window}} browser_state={browser_state} active_browser={@active_browser}>
-          <.view_tree_panel active_window={active_window}/>
+        <.window_pane :let={{window_state, active_window}} browser_state={browser_state} active_browser={@active_browser}>
+          <.view_tree_pane active_window={active_window}/>
           <div class="pane-resizer"></div>
           <.bottom_section window_state={window_state}/>
-        </.window_panel>
-      </.browser_panel>
+        </.window_pane>
+      </.browser_pane>
     </div>
     """
   end
 
-  def browser_panel(assigns) do
+  def browser_pane(assigns) do
     browser_state = 
       if assigns.active_browser do
         assigns.browser_states[assigns.active_browser.name]
@@ -53,7 +53,7 @@ defmodule Crane.Phoenix.Live.Console.HTML do
     """
   end
 
-  def window_panel(assigns) do
+  def window_pane(assigns) do
     window_state =
       if assigns.browser_state.active_window do
         get_in(assigns, [:browser_state, :window_states, assigns.browser_state.active_window.name])
@@ -83,19 +83,74 @@ defmodule Crane.Phoenix.Live.Console.HTML do
     """
   end
 
-  def view_tree_panel(assigns) do
+  def view_tree_pane(assigns) do
+    view_tree = assigns.active_window.view_trees.document
+
+    assigns = assign(assigns, :view_tree, view_tree)
+
     ~H"""
     <div class="view-tree-pane">
-      <h3>Elements</h3>
-      <ul class="dom-tree">
-        <li>
-          <span class="dom-tag">&lt;body</span>
-          <span class="dom-attr">id</span>=<span class="dom-value">"console-root"</span><span class="dom-tag">&gt;</span>...
-        </li>
-      </ul>
+      <.view_tree_node :for={node <- @view_tree} node={node}/>
     </div>
     """
   end
+
+  def view_tree_node(%{node: {:text, _attrs, [text]}} = assigns) when is_binary(text) do
+    assigns = assign(assigns, :text, text)
+    ~H"""
+    <span class="text">{@text}</span>
+    """
+  end
+
+  def view_tree_node(assigns) do
+    ~H"""
+    <details id={"node-#{node_val(@node, :_id)}"} open>
+      <summary class="node">
+        <span class="when-closed">
+          <p>&lt;{node_val(@node, :tag_name)}<.node_attrs node={@node}/>&gt;</p><p>&lt;/{node_val(@node, :tag_name)}&gt;</p>
+        </span>
+        <span class="when-open">
+          &lt;{node_val(@node, :tag_name)}<.node_attrs node={@node}/>&gt;
+        </span>
+      </summary>
+      <.view_tree_node :for={node <- node_children(@node)} node={node}/>
+      <p class="close-node">&lt;/{node_val(@node, :tag_name)}&gt;</p>
+    </details>
+    """
+  end
+
+  def node_val({tag_name, _attrs, _children}, :tag_name),
+    do: tag_name
+  def node_val(node, attr_name) when is_atom(attr_name),
+    do: node_val(node, Atom.to_string(attr_name))
+  def node_val({_tag_name, attrs, _children}, attr_name) do
+    Enum.find_value(attrs, fn 
+      {^attr_name, value} when is_binary(value) -> String.trim(value)
+      {^attr_name, value} -> value
+      _other -> nil
+    end)
+  end
+
+  def node_attrs(%{node: {_tag_name, [], _children}} = assigns),
+    do: ~H""
+  def node_attrs(%{node: {_tag_name, attrs, _children}} = assigns) do
+    attrs = Enum.reduce(attrs, [], fn
+      {"_id", _value}, attrs -> attrs
+      {name, value}, attrs -> [attrs, {name, trim(value)}]
+    end)
+
+    assigns = assign(assigns, :attrs, attrs)
+
+    ~H(<span class="node-attr" :for={{name, value}<- @attrs}><span class="attr-name">{name}</span>=&quot;<span class="attr-value">{value}</span>&quot;</span>)
+  end
+
+  defp trim(text) when is_binary(text),
+    do: String.trim(text)
+  defp trim(value),
+    do: value
+
+  def node_children({_tag_name, _attrs, children}),
+    do: children
 
   def bottom_section(assigns) do
     ~H"""

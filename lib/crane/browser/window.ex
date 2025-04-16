@@ -10,9 +10,6 @@ defmodule Crane.Browser.Window do
     Logger,
     WebSocket
   }
-  # alias Crane.Browser
-  # alias Crane.Browser.Window.{History, Logger, ViewTree, WebSocket}
-  # alias Crane.Protos
 
   import Crane.Utils
 
@@ -20,7 +17,14 @@ defmodule Crane.Browser.Window do
     history: %History{},
     logger: nil,
     browser_name: nil,
-    view_trees: %{},
+    view_trees: %{
+      document: [],
+      body: [],
+      loading: [],
+      disconnecting: [],
+      reconnecting: [],
+      error: []
+    },
     stylesheets: [],
     response: nil,
     created_at: nil,
@@ -93,7 +97,6 @@ defmodule Crane.Browser.Window do
 
         :ok = Browser.update_cookie_jar(browser, cookie_jar)
 
-        broadcast(window.name, {:fetch, window, response})
         {:reply, {:ok, response, window}, window}
 
       {:error, invalid_options} ->
@@ -125,6 +128,7 @@ defmodule Crane.Browser.Window do
         window =
           %{window | history: history, response: response}
           |> Map.merge(Fuse.run_middleware(:visit, response))
+        broadcast(Crane, {:update, window})
 
         {:reply, {:ok, response, window}, window}
 
@@ -144,13 +148,13 @@ defmodule Crane.Browser.Window do
     end
   end
 
-  def handle_call({:new_socket, options}, _from, %__MODULE__{name: name, refs: refs} = window) do
+  def handle_call({:new_socket, options}, _from, %__MODULE__{refs: refs} = window) do
     with {:ok, options} <- Keyword.validate(options, [url: nil, headers: [], window_name: nil]),
       {_, options} <- normalize_options(options),
       {:ok, socket} <- WebSocket.new(window, options) do
         refs = monitor(socket, refs)
         window = %__MODULE__{window | refs: refs}
-        broadcast(name, {:new_socket, window, socket})
+        broadcast(Crane, {:new_socket, window, socket})
 
         {:reply, {:ok, socket, window}, window}
     else
