@@ -152,13 +152,13 @@ defmodule LiveView.View do
       end)
 
       Window.update(window, view_trees: Map.put(window.view_trees, :body, body))
-      View.update(view, %{
+      update(view, %{
         rendered: view.rendered,
         join_count: view.join_count,
         join_attempts: view.join_attempts
       })
 
-      {:ok, LiveSocket.send_to_receiver(live_socket, :view_tree)}
+      LiveSocket.send_to_receiver(live_socket, :view_tree)
 
       # maybe_recover_forms(view, markup, fn(view) ->
       #   # TODO: implement form recovery

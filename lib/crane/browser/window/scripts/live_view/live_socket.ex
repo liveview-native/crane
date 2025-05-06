@@ -174,7 +174,7 @@ defmodule LiveView.LiveSocket do
 
   def handle_join(topic, response, live_socket) do
     {:ok, view} = View.get!(topic)
-    {:ok, View.handle_join(view, response, live_socket)}
+    View.handle_join(view, response, live_socket)
   end
 
   defp is_phx_view?(el),
