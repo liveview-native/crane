@@ -43,13 +43,14 @@ defmodule Crane.MixProject do
   defp deps do
     [
       {:req, "~> 0.5"},
+      {:inflex, "~> 2.0"},
       {:phoenix_playground, github: "bcardarella/phoenix_playground", branch: "bc-release-compat"},
       {:mint_web_socket, "~> 1.0.4"},
       {:floki, "~> 0.37"},
       {:websockex, "~> 0.4"},
       {:http_cookie, "~> 0.7"},
       {:public_suffix, github: "axelson/publicsuffix-elixir"},
-      {:live_view_native, github: "liveview-native/live_view_native"},
+      {:live_view_native, path: "../live_view_native"},
       {:test_server, "~> 0.1", only: :test},
       {:bandit, "~> 1.0"},
       {:cdpotion, "~> 0.1.0"},
@@ -57,6 +58,7 @@ defmodule Crane.MixProject do
       {:live_debugger, path: "../live-debugger", only: :dev},
 
       {:elixirkit, github: "liveview-native/elixirkit", branch: "main"},
+      {:slipstream, "~> 1.2"},
 
       {:plug_crypto, github: "elixir-plug/plug_crypto", branch: "main", override: true},
     ]

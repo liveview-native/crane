@@ -1,5 +1,4 @@
 defmodule Crane.Browser do
-  use GenServer
   import Crane.Utils
 
   alias HttpCookie.Jar
@@ -12,80 +11,36 @@ defmodule Crane.Browser do
     {"Upgrade-Insecure-Requests", "1"},
   ]
 
-  defstruct name: nil,
-    refs: %{},
-    created_at: nil,
+  use Crane.Object,
     headers: [],
     cookie_jar: Jar.new()
 
-  def start_link(args) do
-    name = generate_name(:browser)
+  defchild window: Window
 
-    args = Keyword.put(args, :name, name)
-
-    GenServer.start_link(__MODULE__, args, name: name)
+  @impl true
+  def handle_continue({:init, _opts}, browser) do
+    {:noreply, %__MODULE__{browser | headers: @default_headers ++ browser.headers}}
   end
 
-  def init(args) do
-    headers = Keyword.get(args, :headers, [])
-    Process.flag(:trap_exit, true)
-
-    {:ok, %__MODULE__{
-      headers: @default_headers ++ headers,
-      created_at: DateTime.now!("Etc/UTC"),
-      name: args[:name] 
-    }}
-  end
-
-  def handle_call(:get, _from, browser),
-    do: {:reply, {:ok, browser}, browser}
-
-  def handle_call({:get, %__MODULE__{headers: headers}}, _from, browser) do
-    browser = %__MODULE__{browser | headers: browser.headers ++ headers}
-    {:reply, {:ok, browser}, browser}
-  end
-
-  def handle_call(:windows, _from, %__MODULE__{refs: refs} = browser) do
-    windows = get_reference_resource(refs, :window, fn(name) ->
-      Window.get(name)
-    end)
-    |> Enum.sort_by(&(&1.created_at), {:asc, DateTime})
-
-    {:reply, {:ok, windows}, browser}
-  end
+  def handle_continue(_continue_arg, browser),
+    do: {:noreply, browser}
 
   def handle_call({:restore_window, %Window{} = window_state}, _from, %__MODULE__{refs: refs} = browser) do
     with {:ok, window} <- Window.restore(window_state),
       refs <- monitor(window, refs) do
-
-      browser = %__MODULE__{browser | refs: refs}
-
-      broadcast(Crane, {:restore_window, window, browser})
-
-      {:reply, {:ok, window, browser}, browser}
-    else
-      error -> {:reply, error, browser}
-    end
-  end
-
-  def handle_call(:new_window, _from, %__MODULE__{refs: refs} = browser) do
-    with {:ok, window} <- Window.new([browser: browser]),
-      refs <- monitor(window, refs) do
-
-      browser = %__MODULE__{browser | refs: refs}
-
-      broadcast(Crane, {:new_window, window, browser})
-
-      {:reply, {:ok, window, browser}, browser}
+        browser = %__MODULE__{browser | refs: refs}
+        broadcast(Crane, {:restore_window, window, browser})
+        {:reply, {:ok, window, browser}, browser}
     else
       error -> {:reply, error, browser}
     end
   end
 
   def handle_call(_msg, _from, browser) do
-    {:noreply, browser}
+    {:reply, browser}
   end
 
+  @impl true
   def handle_cast({:update_cookie_jar, cookie_jar}, browser) do
     broadcast(Crane, {:update, browser})
     {:noreply, %__MODULE__{browser | cookie_jar: cookie_jar}}
@@ -93,12 +48,6 @@ defmodule Crane.Browser do
 
   def handle_cast(_msg, browser) do
     {:noreply, browser}
-  end
-
-  def handle_info({:DOWN, ref, :process, _pid, _reason}, %__MODULE__{refs: refs} = browser) do
-    {_name, refs} = Map.pop(refs, ref)
-
-    {:noreply, %__MODULE__{browser | refs: refs}}
   end
 
   def handle_info(_msg, browser) do
@@ -109,71 +58,7 @@ defmodule Crane.Browser do
     GenServer.cast(name, {:update_cookie_jar, cookie_jar})
   end
 
-  def windows(%__MODULE__{name: name}) do
-    GenServer.call(name, :windows)
-  end
-
-  def windows!(browser) do
-    {:ok, windows} = windows(browser)
-    windows
-  end
-
   def restore_window(%__MODULE__{name: name}, %Window{} = window_state \\ %Window{}) do
     GenServer.call(name, {:restore_window, %Window{window_state | browser_name: name}})
-  end
-
-  def new_window(%__MODULE__{name: name}) do
-    GenServer.call(name, :new_window)
-  end
-
-  def new_window(name) when is_binary(name) do
-    new_window(String.to_existing_atom(name))
-  end
-
-  def new_window(name) when is_atom(name) do
-    new_window(%__MODULE__{name: name})
-  end
-
-  def new_window!(browser_or_name) do
-    {:ok, window} = new_window(browser_or_name)
-    window
-  end
-
-  def close_window(%__MODULE__{} = browser, %Window{} = window) do
-    :ok = Window.close(window)
-    get(browser)
-  end
-
-  def close_window(browser_name, window_name) do
-    :ok = Window.close(window_name)
-    get(browser_name)
-  end
-
-  def new(state \\ []) when is_list(state) do
-    with {:ok, pid} <- start_link(state),
-      {:ok, browser} <- GenServer.call(pid, :get) do
-        {:ok, browser}
-    else
-      error -> {:error, error}
-    end
-  end
-
-  def close(%__MODULE__{name: name}) do
-    GenServer.stop(name, :normal)
-  end
-
-  def get(%__MODULE__{name: name}),
-    do: get(name)
-
-  def get(name) when is_binary(name),
-    do: get(String.to_existing_atom(name))
-
-  def get(name) when is_atom(name) do
-    GenServer.call(name, :get)
-  end
-
-  def get!(resource_or_name) do
-    {:ok, window} = get(resource_or_name)
-    window
   end
 end

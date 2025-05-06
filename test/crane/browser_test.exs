@@ -139,7 +139,7 @@ defmodule Crane.BrowserTest do
     end
   end
 
-  describe "close_window" do
+  describe "close window" do
     test "will close all windows and return updated browser" do
       {:ok, browser} = Browser.new()
 
@@ -174,7 +174,7 @@ defmodule Crane.BrowserTest do
 
       Req.Test.allow(Window, self(), pid_for(window))
 
-      {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com")
+      {:ok, window} = Window.visit(window, url: "https://dockyard.com")
       old_pid = Process.whereis(window.name)
 
       :ok = Window.close(window)

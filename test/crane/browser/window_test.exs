@@ -8,6 +8,8 @@ defmodule Crane.Browser.WindowTest do
     Browser.Window.WebSocket
   }
 
+  alias LiveViewNative.Template.Parser
+
   import Crane.Test.Utils
 
   setup config do
@@ -74,7 +76,7 @@ defmodule Crane.Browser.WindowTest do
 
       :ok = Window.close(window)
 
-      :timer.sleep(10)
+      :timer.sleep(50)
 
       refute Process.alive?(socket_1_pid)
       refute Process.alive?(socket_2_pid)
@@ -83,7 +85,7 @@ defmodule Crane.Browser.WindowTest do
 
   describe "visit" do
     setup %{browser: browser} do
-      {:ok, pid} = Window.start_link(%{browser_name: browser.name})
+      {:ok, pid} = Window.start_link([browser_name: browser.name])
 
       {:ok, window} = GenServer.call(pid, :get)
 
@@ -97,10 +99,10 @@ defmodule Crane.Browser.WindowTest do
 
       Req.Test.allow(Window, self(), pid_for(window))
 
-      {:ok, response, window} = Window.visit(window, url: "https://dockyard.com")
+      {:ok, window} = Window.visit(window, url: "https://dockyard.com")
 
-      assert response == window.response
-      assert response.body == "<Text>Success!</Text>"
+      assert Parser.raw_string(window.view_trees.document) =~ "<Text>Success!</Text>"
+
       assert window.history.index == 0
       assert window.history.stack == [
         {%{}, headers: [], method: "GET", url: "https://dockyard.com"}
@@ -117,7 +119,7 @@ defmodule Crane.Browser.WindowTest do
       end)
 
       Req.Test.allow(Window, self(), pid_for(window))
-      {:ok, _response, _window} = Window.visit(window, url: url)
+      {:ok, _window} = Window.visit(window, url: url)
       {:ok, browser} = Browser.get(window.browser_name)
       {:ok, cookie, _cookie_jar} = HttpCookie.Jar.get_cookie_header_value(browser.cookie_jar, URI.new!(url))
 
@@ -169,7 +171,7 @@ defmodule Crane.Browser.WindowTest do
   describe "forward/back/go" do
     setup %{browser: browser} do
       {:ok, window} = Window.new(browser: browser)
-      
+
       Req.Test.stub(Window, fn(conn) ->
         case Conn.request_url(conn) do
           "https://dockyard.com/1" -> 
@@ -187,29 +189,29 @@ defmodule Crane.Browser.WindowTest do
 
       Req.Test.allow(Window, self(), pid_for(window))
 
-      {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/1")
-      {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/2")
-      {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/3")
-      {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/4")
-      {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com/5")
+      {:ok, window} = Window.visit(window, url: "https://dockyard.com/1")
+      {:ok, window} = Window.visit(window, url: "https://dockyard.com/2")
+      {:ok, window} = Window.visit(window, url: "https://dockyard.com/3")
+      {:ok, window} = Window.visit(window, url: "https://dockyard.com/4")
+      {:ok, window} = Window.visit(window, url: "https://dockyard.com/5")
 
       {:ok, window: window}
     end
 
     test "will navigate history", %{window: window} do
-      {:ok, _response, window} = Window.back(window)
+      {:ok, window} = Window.back(window)
       assert window.response.body == "<Text>4</Text>"
-      {:ok, _response, window} = Window.back(window)
+      {:ok, window} = Window.back(window)
       assert window.response.body == "<Text>3</Text>"
 
-      {:ok, _response, window} = Window.go(window, 2)
+      {:ok, window} = Window.go(window, 2)
       assert window.response.body == "<Text>5</Text>"
-      {:ok, _response, window} = Window.go(window, -4)
+      {:ok, window} = Window.go(window, -4)
       assert window.response.body == "<Text>1</Text>"
 
-      {:ok, _response, window} = Window.forward(window)
+      {:ok, window} = Window.forward(window)
       assert window.response.body == "<Text>2</Text>"
-      {:ok, _response, window} = Window.forward(window)
+      {:ok, window} = Window.forward(window)
       assert window.response.body == "<Text>3</Text>"
     end
   end
@@ -224,7 +226,7 @@ defmodule Crane.Browser.WindowTest do
 
       Req.Test.allow(Window, self(), pid_for(window))
 
-      {:ok, _response, window} = Window.visit(window, url: "https://dockyard.com")
+      {:ok, window} = Window.visit(window, url: "https://dockyard.com")
       old_pid = Process.whereis(window.name)
 
       :ok = Window.close(window)
@@ -242,7 +244,7 @@ defmodule Crane.Browser.WindowTest do
 
   describe "sockets" do
     setup do
-      {:ok, pid} = Window.start_link(%{})
+      {:ok, pid} = Window.start_link([])
       {:ok, window} = GenServer.call(pid, :get)
       {:ok, window: window}
     end

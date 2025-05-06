@@ -43,4 +43,7 @@ defmodule Crane.Browser.Window.History do
         }
     end
   end
+
+  def current_frame(%__MODULE__{} = history),
+    do: Enum.at(history.stack, history.index)
 end

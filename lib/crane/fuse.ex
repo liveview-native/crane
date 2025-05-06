@@ -2,25 +2,27 @@ defmodule Crane.Fuse do
   alias Req.Response
 
   def run_middleware(:visit, %Response{status: 200, body: body}) do
-    {:ok, view_tree} = LiveViewNative.Template.Parser.parse_document(body,
+    {:ok, document} = LiveViewNative.Template.Parser.parse_document(body,
       strip_comments: true,
       text_as_node: true,
       inject_identity: true)
 
-    stylesheets = Floki.find(view_tree, "Style") |> Floki.attribute("url")
-
-    view_trees = %{
-      document: view_tree,
-      body: Floki.find(view_tree, "body > *"),
-      loading: lifecycle_template(view_tree, "loading"),
-      disconnected: lifecycle_template(view_tree, "disconnected"),
-      reconnecting: lifecycle_template(view_tree, "reconnecting"),
-      error: lifecycle_template(view_tree, "error")
-    }
+    stylesheets = Floki.find(document, "Style") |> Floki.attribute("url")
 
    %{
-      view_trees: view_trees,
+      view_trees: find_view_trees(document),
       stylesheets: stylesheets
+    }
+  end
+
+  def find_view_trees(document) do
+    %{
+      document: document,
+      body: Floki.find(document, "body > *"),
+      loading: lifecycle_template(document, "loading"),
+      disconnected: lifecycle_template(document, "disconnected"),
+      reconnecting: lifecycle_template(document, "reconnecting"),
+      error: lifecycle_template(document, "error")
     }
   end
 

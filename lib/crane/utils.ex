@@ -1,8 +1,8 @@
 defmodule Crane.Utils do
-  def generate_name(type) when is_atom(type),
-    do: generate_name(Atom.to_string(type))
-  def generate_name(type) do
-    type <> "-" <>
+  def generate_name(prefix) when is_atom(prefix),
+    do: generate_name(Atom.to_string(prefix))
+  def generate_name(prefix) do
+    prefix <> "-" <>
     (:crypto.hash(:sha, "#{:erlang.system_time(:nanosecond)}")
     |> Base.encode32(case: :lower))
     |> String.to_atom()
@@ -17,14 +17,14 @@ defmodule Crane.Utils do
     end)
   end
 
-  def get_reference_resource(refs, type, func) do
+  def get_reference_object(refs, type, func) do
     type = Atom.to_string(type)
 
     Enum.reduce(refs, [], fn({_ref, name}, acc) ->
       case Atom.to_string(name) do
         ^type <> "-" <> _id = name ->
-          {:ok, resource} = func.(name)
-          [resource | acc]
+          {:ok, object} = func.(name)
+          [object | acc]
         _other -> acc
       end
     end)

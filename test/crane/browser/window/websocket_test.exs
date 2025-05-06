@@ -2,14 +2,11 @@ defmodule Crane.Browser.Window.WebSocketTest do
   use ExUnit.Case
   # alias Plug.Conn
 
-  alias Crane.{
-    Browser.Window,
-    Browser.Window.WebSocket
-  }
+  alias Crane.Browser.Window.WebSocket
 
   describe "new" do
     test "will connect to an existing websocket server" do
-      {:ok, socket} = WebSocket.new(%Window{}, url: "http://localhost:4567/websocket")
+      {:ok, socket} = WebSocket.new(url: "http://localhost:4567/websocket")
 
       pid = self()
 
@@ -22,7 +19,7 @@ defmodule Crane.Browser.Window.WebSocketTest do
 
   describe "close" do
     test "will close socket" do
-      {:ok, %WebSocket{name: name} = socket} = WebSocket.new(%Window{}, url: "http://localhost:4567/websocket")
+      {:ok, %WebSocket{name: name} = socket} = WebSocket.new(url: "http://localhost:4567/websocket")
 
       pid = Process.whereis(name)
       assert Process.alive?(pid)

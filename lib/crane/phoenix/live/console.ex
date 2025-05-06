@@ -65,15 +65,14 @@ defmodule Crane.Phoenix.Live.Console do
 
   def handle_event("close_browser", %{"browser" => browser_name}, socket) do
     {:ok, browser} = Crane.Browser.get(browser_name)
-    {:ok, _crane} = Crane.close_browser(browser)
+    {:ok, _crane} = Crane.Browser.close(browser)
 
     {:noreply, socket}
   end
 
   def handle_event("close_window", %{"window" => window_name}, socket) do
-    {:ok, browser} = Browser.get(socket.assigns.active_browser)
     {:ok, window} = Window.get(window_name)
-    {:ok, _browser} = Crane.Browser.close_window(browser, window)
+    :ok = Crane.Browser.Window.close(window)
 
     {:noreply, socket}
   end
