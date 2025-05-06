@@ -36,6 +36,12 @@ defmodule Crane.Browser.Window do
     }}
   end
 
+  def handle_continue({:run_scripts, opts}, %__MODULE__{scripts: scripts} = window) do
+    Enum.each(scripts, &(GenServer.cast(Crane, {:run_script, &1, window, opts})))
+
+    {:noreply, window}
+  end
+
   def handle_continue(_continue_arg, window),
     do: {:noreply, window}
 
@@ -76,6 +82,7 @@ defmodule Crane.Browser.Window do
   end
 
   def handle_call({:visit, options}, from, window) do
+    {receiver, options} = Keyword.pop(options, :receiver)
     case handle_call({:fetch, options}, from, window) do
       {:reply, {:ok, response, window}, _window} -> 
         history =
@@ -93,9 +100,11 @@ defmodule Crane.Browser.Window do
           %{window | history: history, response: response, location: location}
           |> Map.merge(Fuse.run_middleware(:visit, response))
 
+        # :ok = GenServer.cast(window.name, {:run_scripts, receiver: receiver})
+
         Crane.Utils.broadcast(Crane, {:update, window})
 
-        {:reply, {:ok, window}, window}
+        {:reply, {:ok, window}, window, {:continue, {:run_scripts, receiver: receiver}}}
 
       error -> error
     end
@@ -120,10 +129,10 @@ defmodule Crane.Browser.Window do
     {:reply, {:ok, window}, window}
   end
 
-  @impl true
-  def handle_cast(:run_scripts, %__MODULE__{scripts: scripts} = window) do
-    {:noreply, Enum.reduce(scripts, window, &(&1.call(&2)))}
-  end
+  # @impl true
+  # def handle_cast({:run_scripts, opts}, %__MODULE__{scripts: scripts} = window) do
+  #   {:noreply, Enum.reduce(scripts, window, &(&1.call(&2, opts)))}
+  # end
 
   def handle_info(_msg, state) do
     {:noreply, state}
@@ -144,7 +153,6 @@ defmodule Crane.Browser.Window do
 
   def visit(%__MODULE__{name: name}, options) do
     {:ok, window} = GenServer.call(name, {:visit, options})
-    # :ok = GenServer.cast(name, :run_scripts)
     {:ok, window}
   end
 
