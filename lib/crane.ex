@@ -12,13 +12,24 @@ defmodule Crane do
   def handle_call({:launch, opts}, _from, crane) do
     {name, opts} = Keyword.pop(opts, :name)
 
-    pid = Process.whereis(name)
-    with {:ok, browser, crane} <- new_browser(crane),
-      {:ok, window, browser} <- Crane.Browser.new_window(browser, name: name, scripts: [
-        LiveView
-      ]),
-      {:ok, window} <- Crane.Browser.Window.visit(window, opts) do
+    with pid when not is_nil(pid) <- Process.whereis(name),
+      true <- Process.alive?(pid),
+      {:ok, window} <- Crane.Browser.Window.get(name),
+      {:ok, browser} <- Crane.Browser.get(window.browser_name) do
         {:reply, {:ok, Window.strip!(window), Browser.strip!(browser)}, crane}
+    else
+      _error ->
+        with {:ok, browser, crane} <- new_browser(crane),
+          {:ok, window, browser} <- Crane.Browser.new_window(browser, name: name, scripts: [
+            LiveView
+          ]),
+          {:ok, window} <- Crane.Browser.Window.visit(window, opts) do
+            {:reply, {:ok, Window.strip!(window), Browser.strip!(browser)}, crane}
+        else
+          error ->
+            {:reply, {:error, "failed to launch"}, crane}
+        end
+  
     end
   end
 
