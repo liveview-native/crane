@@ -57,7 +57,11 @@ defmodule LiveView.View do
 
   def start_link(opts) do
     name_prefix = %__MODULE__{}.name_prefix
-    id = has_attribute(opts[:el], "id")
+    id = case has_attribute(opts[:el], "id") do
+      nil -> Crane.Utils.generate_name(:root)
+      id -> id
+    end
+
     opts = Keyword.merge(opts, [
       id: id,
       name: String.to_atom("#{name_prefix}#{id}")
