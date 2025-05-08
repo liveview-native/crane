@@ -19,6 +19,14 @@ defmodule Crane do
     end
   end
 
+  def handle_call(:start, _from, crane) do
+    {:stop, "restarting", crane}
+  end
+
+  def handle_call(:restore, _from, crane) do
+    
+  end
+
   def handle_cast({:run_script, script, window, opts}, crane) do
     apply(script, :call, [window, opts])
     {:noreply, crane}
