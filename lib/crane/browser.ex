@@ -61,4 +61,9 @@ defmodule Crane.Browser do
   def restore_window(%__MODULE__{name: name}, %Window{} = window_state \\ %Window{}) do
     GenServer.call(name, {:restore_window, %Window{window_state | browser_name: name}})
   end
+
+  def strip!(%__MODULE__{} = browser),
+    do: %__MODULE__{
+      name: browser.name
+    }
 end

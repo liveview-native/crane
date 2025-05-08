@@ -1,5 +1,8 @@
 defmodule Crane do
-  alias Crane.Browser
+  alias Crane.{
+    Browser,
+    Browser.Window
+  }
 
   use Crane.Object,
     name: __MODULE__
@@ -12,7 +15,7 @@ defmodule Crane do
         LiveView
       ]),
       {:ok, window} <- Crane.Browser.Window.visit(window, options) do
-        {:reply, {:ok, window, browser}, crane}
+        {:reply, {:ok, Window.strip!(window), Browser.strip!(browser)}, crane}
     end
   end
 

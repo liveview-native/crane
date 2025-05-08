@@ -33,9 +33,6 @@ defmodule Crane.Fuse do
     }
   end
 
-  def run_middleware(:visir, _response),
-    do: %{view_trees: [], stylesheets: []}
-
   defp lifecycle_template(view_tree, type) do
     Floki.find(view_tree, ~s'head [template="#{type}"')
   end

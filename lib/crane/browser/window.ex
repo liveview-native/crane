@@ -174,4 +174,12 @@ defmodule Crane.Browser.Window do
     {:ok, cookie, _jar} = HttpCookie.Jar.get_cookie_header_value(browser.cookie_jar, request_url)
     browser.headers ++ [{"cookie", cookie}]
   end
+
+  def strip!(%__MODULE__{} = window),
+    do: %{
+      name: window.name,
+      stylesheets: window.stylesheets,
+      browser_name: window.browser_name,
+      view_trees: Map.delete(window.view_trees, :document)
+    }
 end
