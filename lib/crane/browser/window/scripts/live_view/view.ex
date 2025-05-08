@@ -148,7 +148,7 @@ defmodule LiveView.View do
 
       {markup, streams} = render_container(view, live_socket, nil, :join)
 
-      {:ok, [{_container_tag_name, _container_attrs, container_children}]} = LiveViewNative.Template.Parser.parse_document(markup,
+      {:ok, [{_container_tag_name, _container_attrs, container_children} = container]} = LiveViewNative.Template.Parser.parse_document(markup,
         strip_comments: true,
         text_as_node: true,
         inject_identity: true)
@@ -164,7 +164,14 @@ defmodule LiveView.View do
         other -> other
       end)
 
-      Window.update(window, view_trees: Map.put(window.view_trees, :body, body))
+      container = [{
+        "div",
+        [{"id", view.id}],
+        [container]
+      }]
+
+      Window.update(window, view_trees: Map.merge(window.view_trees, %{body: body, container: container}))
+
       view = %__MODULE__{view |
         rendered: view.rendered,
         join_count: view.join_count,
@@ -318,7 +325,7 @@ defmodule LiveView.View do
 
     {markup, streams} = render_container(view, live_socket, nil, :join)
 
-    {:ok, [{_container_tag_name, _container_attrs, container_children}]} = LiveViewNative.Template.Parser.parse_document(markup,
+    {:ok, [{_container_tag_name, _container_attrs, container_children} = container]} = LiveViewNative.Template.Parser.parse_document(markup,
       strip_comments: true,
       text_as_node: true,
       inject_identity: true)
@@ -334,7 +341,13 @@ defmodule LiveView.View do
       other -> other
     end)
 
-    Window.update(window, view_trees: Map.put(window.view_trees, :body, body))
+    container = [{
+      "div",
+      [{"id", view.id}],
+      [container]
+    }]
+
+    Window.update(window, view_trees: Map.merge(window.view_trees, %{body: body, container: container}))
 
     view = %__MODULE__{view |
       rendered: view.rendered,

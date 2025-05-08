@@ -9,22 +9,21 @@ defmodule Crane do
 
   defchild browser: Browser
 
-  def handle_call({:launch, options}, _from, crane) do
+  def handle_call({:launch, opts}, _from, crane) do
+    {name, opts} = Keyword.pop(opts, :name)
+
+    pid = Process.whereis(name)
     with {:ok, browser, crane} <- new_browser(crane),
-      {:ok, window, browser} <- Crane.Browser.new_window(browser, scripts: [
+      {:ok, window, browser} <- Crane.Browser.new_window(browser, name: name, scripts: [
         LiveView
       ]),
-      {:ok, window} <- Crane.Browser.Window.visit(window, options) do
+      {:ok, window} <- Crane.Browser.Window.visit(window, opts) do
         {:reply, {:ok, Window.strip!(window), Browser.strip!(browser)}, crane}
     end
   end
 
   def handle_call(:start, _from, crane) do
     {:stop, "restarting", crane}
-  end
-
-  def handle_call(:restore, _from, crane) do
-    
   end
 
   def handle_cast({:run_script, script, window, opts}, crane) do
@@ -66,10 +65,6 @@ defmodule Crane do
   end
 
   def launch(options) do
-    with {:ok, browser, _crane} <- new_browser(),
-      {:ok, window, browser} <- Crane.Browser.new_window(browser),
-      {:ok, window} <- Crane.Browser.Window.visit(window, options) do
-        {:ok, window, browser}
-    end
+    GenServer.call(Crane, {:launch, options})
   end
 end

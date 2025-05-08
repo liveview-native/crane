@@ -321,7 +321,7 @@ defmodule LiveView.LiveSocket do
 
   defp build_payload(%__MODULE__{} = live_socket, :view_tree) do
     {:ok, window} = Window.get(live_socket.window_name)
-    window.view_trees.body
+    window.view_trees.container
   end
 
   def get_binding_prefix(%__MODULE__{binding_prefix: binding_prefix}),

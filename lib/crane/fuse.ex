@@ -26,11 +26,32 @@ defmodule Crane.Fuse do
     %{
       document: document,
       body: Floki.find(document, "body > *"),
+      root: root_template(document),
+      main: main_template(document),
       loading: lifecycle_template(document, "loading"),
       disconnected: lifecycle_template(document, "disconnected"),
       reconnecting: lifecycle_template(document, "reconnecting"),
       error: lifecycle_template(document, "error")
     }
+  end
+
+  defp has_attribute?(el, attribute) do
+    Floki.attribute(el, attribute) |> List.first()
+  end
+
+  defp main_template(view_tree),
+    do: Floki.find(view_tree, "data-phx-main")
+
+  defp root_template(view_tree) do
+    Floki.find(view_tree, "body > *")
+    |> Floki.traverse_and_update(fn 
+      {tag_name, attributes, children} = element ->
+        if has_attribute?(element, "data-phx-main") do
+          {tag_name, attributes, []}
+        else
+          element
+        end
+    end)
   end
 
   defp lifecycle_template(view_tree, type) do
