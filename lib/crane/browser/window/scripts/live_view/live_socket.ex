@@ -122,6 +122,20 @@ defmodule LiveView.LiveSocket do
   def handle_call(:get, _from, live_socket),
     do: {:reply, {:ok, live_socket}, live_socket}
 
+  def handle_message(topic, "diff", payload, live_socket) do
+    {events, diff} = Map.pop(payload, :e, [])
+    GenServer.cast(String.to_existing_atom(topic), {:dispatch, :handle_diff, [diff, events]})
+    # {:ok, view} = View.get(String.to_existing_atom(topic))
+    # {:ok, live_socket} = View.handle_diff(view, diff, live_socket)
+    #
+    # live_socket = Enum.reduce(events, live_socket, fn(event, live_socket) ->
+    #   {:ok, live_socket} = View.handle_event(view, event, live_socket)
+    #   live_socket
+    # end)
+
+    {:ok, live_socket}
+  end
+
   def handle_call({:assign, func}, %__MODULE__{socket: socket} = live_socket) when is_function(func, 1) do
     socket = func.(socket)
 
@@ -174,7 +188,7 @@ defmodule LiveView.LiveSocket do
 
   def handle_join(topic, response, live_socket) do
     {:ok, view} = View.get!(topic)
-    View.handle_join(view, response, live_socket)
+    GenServer.call(view.name, {:dispatch, :handle_join, [response, live_socket]})
   end
 
   defp is_phx_view?(el),
@@ -309,4 +323,9 @@ defmodule LiveView.LiveSocket do
     {:ok, window} = Window.get(live_socket.window_name)
     window.view_trees.body
   end
+
+  def get_binding_prefix(%__MODULE__{binding_prefix: binding_prefix}),
+    do: binding_prefix
+  def binding(%__MODULE__{} = live_socket, kind),
+    do: "#{get_binding_prefix(live_socket)}#{kind}"
 end

@@ -10,8 +10,15 @@ defmodule Crane.Fuse do
     stylesheets = Floki.find(document, "Style") |> Floki.attribute("url")
 
    %{
+      status: 200,
       view_trees: find_view_trees(document),
       stylesheets: stylesheets
+    }
+  end
+
+  def run_middleware(:visit, %Response{status: status, body: body}) do
+    %{
+      status: status, body: body
     }
   end
 
