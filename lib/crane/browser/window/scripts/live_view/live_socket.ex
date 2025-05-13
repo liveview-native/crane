@@ -101,7 +101,7 @@ defmodule LiveView.LiveSocket do
       live_socket.refs
     end
   
-    {:ok, struct(live_socket, opts ++ [socket: socket, opts: opts, href: window.location.href])}
+    {:ok, struct(live_socket, opts ++ [refs: refs, socket: socket, opts: opts, href: window.location.href])}
   end
 
   defp live_view_url(href, path, params) do
