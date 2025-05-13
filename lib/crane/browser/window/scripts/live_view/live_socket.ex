@@ -169,10 +169,6 @@ defmodule LiveView.LiveSocket do
     {:reply, %__MODULE__{live_socket | socket: socket}}
   end
 
-  def handle_call({:attach_receiver, receiver}, _from, websocket) do
-    {:reply, :ok, %__MODULE__{websocket | receiver: receiver}}
-  end
-
   @impl true
   def handle_info({:DOWN, ref, :process, _pid, _reason}, %__MODULE__{refs: refs} = live_socket) when is_map_key(refs, ref) do
     live_socket = case Map.pop(refs, ref) do
@@ -229,6 +225,10 @@ defmodule LiveView.LiveSocket do
     end
 
     {:noreply, live_socket}
+  end
+
+  def handle_cast({:attach_receiver, receiver}, websocket) do
+    {:noreply, %__MODULE__{websocket | receiver: receiver}}
   end
 
   defp is_phx_view?(el),
@@ -349,7 +349,7 @@ defmodule LiveView.LiveSocket do
     do: !!Map.get(live_socket.session_storage, @phx_lv_profile)
 
   def attach_receiver(%__MODULE__{name: name}, receiver),
-    do: GenServer.call(name, {:attach_receiver, receiver})
+    do: GenServer.cast(name, {:attach_receiver, receiver})
 
   def send_to_receiver(name, event) when is_atom(name),
     do: send_to_receiver(%__MODULE__{name: name}, event)

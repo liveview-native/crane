@@ -17,6 +17,10 @@ defmodule Crane do
       {:ok, window} <- Crane.Browser.Window.get(name),
       {:ok, window} <- Crane.Browser.Window.reset_view_trees(window),
       {:ok, browser} <- Crane.Browser.get(window.browser_name) do
+        for socket <- Crane.Browser.Window.sockets!(window) do
+          GenServer.cast(socket.name, {:attach_receiver, opts[:receiver]})
+        end
+
         {:reply, {:ok, Window.strip!(window), Browser.strip!(browser)}, crane}
     else
       _error ->
