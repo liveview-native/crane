@@ -94,6 +94,13 @@ defmodule LiveView.LiveSocket do
         json_parser: LiveView.JSON,
         headers: opts[:headers])
 
+    refs = if live_socket.receiver do
+      ref = Process.monitor(live_socket.receiver)
+      Map.put(live_socket.refs, ref, {:receiver, live_socket.receiver})
+    else
+      live_socket.refs
+    end
+  
     {:ok, struct(live_socket, opts ++ [socket: socket, opts: opts, href: window.location.href])}
   end
 
@@ -164,6 +171,18 @@ defmodule LiveView.LiveSocket do
 
   def handle_call({:attach_receiver, receiver}, _from, websocket) do
     {:reply, :ok, %__MODULE__{websocket | receiver: receiver}}
+  end
+
+  @impl true
+  def handle_info({:DOWN, ref, :process, _pid, _reason}, %__MODULE__{refs: refs} = live_socket) when is_map_key(refs, ref) do
+    live_socket = case Map.pop(refs, ref) do
+      {{:receiver, _receiver}, refs} ->
+          %__MODULE__{live_socket | receiver: nil, refs: refs}
+      {_name, refs} ->
+          %__MODULE__{live_socket | refs: refs}
+    end
+
+    {:noreply, live_socket}
   end
 
   def handle_info({:__slipstream_event__, event}, %__MODULE__{} = live_socket) do

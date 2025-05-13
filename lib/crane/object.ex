@@ -124,6 +124,8 @@ defmodule Crane.Object do
         {:noreply, %__MODULE__{object | refs: refs}}
       end
 
+      defoverridable handle_info: 2
+
       if @singleton do
         def get,
           do: GenServer.call(@singleton, :get)
