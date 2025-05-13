@@ -167,7 +167,7 @@ defmodule LiveView.View do
 
       {markup, streams} = render_container(view, nil, :join)
 
-      {:ok, [{_container_tag_name, _container_attrs, container_children} = container]} = LiveViewNative.Template.Parser.parse_document(markup,
+      {:ok, [{container_tag_name, container_attrs, container_children} = container]} = LiveViewNative.Template.Parser.parse_document(markup,
         strip_comments: true,
         text_as_node: true,
         inject_identity: true)
@@ -183,11 +183,7 @@ defmodule LiveView.View do
         other -> other
       end)
 
-      container = [{
-        "div",
-        [{"id", view.id}],
-        [container]
-      }]
+      container = build_container(view, {container_tag_name, container_attrs, container_children})
 
       Window.update(window, view_trees: Map.merge(window.view_trees, %{body: body, container: container}))
 
@@ -460,11 +456,7 @@ defmodule LiveView.View do
       other -> other
     end)
 
-    container = {
-      container_tag_name,
-      [{"id", view.id}] ++ container_attrs,
-      container_children
-    }
+    container = build_container(view, {container_tag_name, container_attrs, container_children})
 
     Window.update(window, view_trees: Map.merge(window.view_trees, %{body: body, container: container}))
 
@@ -478,6 +470,9 @@ defmodule LiveView.View do
 
     {:noreply, view}
   end
+
+  defp build_container(%__MODULE__{id: id}, {tag_name, attributes, children}),
+    do: {tag_name, [{"id", id}] ++ attributes, children}
 
   def handle_redirect(payload, %__MODULE__{} = view) do
     cb = fn(view) ->
