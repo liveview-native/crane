@@ -17,6 +17,8 @@ defmodule LiveView.View.Rendered do
     to_string: 1
   ]
 
+  import LiveView.Utils
+
   defstruct view_id: nil,
     rendered: %{},
     magic_id: 0
@@ -87,14 +89,6 @@ defmodule LiveView.View.Rendered do
       {ndiff, cache}
     end
   end
-
-  defp is_cid?(cid) when is_number(cid),
-    do: true
-  defp is_cid?(cid) when is_binary(cid),
-    do: Regex.match?(~r/^(0|[1-9]\d*)$/, cid)
-  defp is_cid?(_cid),
-    do: false
-
 
   defp mutable_merge(target, source) do
     if Map.has_key?(source, @static) do

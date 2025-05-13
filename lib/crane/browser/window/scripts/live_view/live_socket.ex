@@ -5,6 +5,7 @@ defmodule LiveView.LiveSocket do
   }
   alias LiveView.{
     DOM,
+    TransitionSet,
     View
   }
 
@@ -40,7 +41,7 @@ defmodule LiveView.LiveSocket do
     defaults: @defaults,
     prev_active: nil,
     silenced: false,
-    main: nil,
+    main_name: nil,
     outgoing_main_el: nil,
     click_started_at_target: nil,
     link_ref: nil,
@@ -63,10 +64,15 @@ defmodule LiveView.LiveSocket do
     bound_event_names: [],
     server_close_ref: nil,
     dom_callbacks: %{},
-    transitions: [],
+    transitions: %TransitionSet{},
     current_history_position: 0
 
   defchild view: View
+
+  @behaviour Access
+  defdelegate fetch(live_socket, key), to: Map
+  defdelegate get_and_update(live_socket, key, function), to: Map
+  defdelegate pop(live_socket, key), to: Map
 
   def start_link(opts) when is_list(opts) do
     opts =
@@ -124,15 +130,22 @@ defmodule LiveView.LiveSocket do
 
   def handle_message(topic, "diff", payload, live_socket) do
     {events, diff} = Map.pop(payload, :e, [])
-    GenServer.cast(String.to_existing_atom(topic), {:dispatch, :handle_diff, [diff, events]})
-    # {:ok, view} = View.get(String.to_existing_atom(topic))
-    # {:ok, live_socket} = View.handle_diff(view, diff, live_socket)
-    #
-    # live_socket = Enum.reduce(events, live_socket, fn(event, live_socket) ->
-    #   {:ok, live_socket} = View.handle_event(view, event, live_socket)
-    #   live_socket
-    # end)
+    :ok = View.dispatch(topic, :handle_diff, [diff, events])
+    {:ok, live_socket}
+  end
 
+  def handle_message(topic, "redirect", payload, live_socket) do
+    :ok = View.dispatch(topic, :handle_redirect, [payload])
+    {:ok, live_socket}
+  end
+
+  def handle_mesage(topic, "live_patch", redir, live_socket) do
+    :ok = View.dispatch(topic, :handle_live_patch, [redir])
+    {:ok, live_socket}
+  end
+
+  def handle_message(topic, "live_redirect", redir, live_socket) do
+    :ok = View.dispatch(topic, :handle_live_redirect, [redir])
     {:ok, live_socket}
   end
 
@@ -187,8 +200,16 @@ defmodule LiveView.LiveSocket do
   end
 
   def handle_join(topic, response, live_socket) do
-    {:ok, view} = View.get!(topic)
-    GenServer.call(view.name, {:dispatch, :handle_join, [response, live_socket]})
+    :ok = GenServer.cast(String.to_existing_atom(topic), {:dispatch, :handle_join, [response]})
+    {:ok, live_socket}
+  end
+
+  def handle_cast({:send_to_receiver, event}, %__MODULE__{receiver: receiver} = live_socket) do
+    if receiver do
+      send(receiver, {event, build_payload(live_socket, event)})
+    end
+
+    {:noreply, live_socket}
   end
 
   defp is_phx_view?(el),
@@ -207,7 +228,7 @@ defmodule LiveView.LiveSocket do
         {:ok, view, live_socket} = View.join(view, live_socket)
 
         if Floki.attribute(root_el, @phx_main) != [],
-          do: %__MODULE__{live_socket | main: view},
+          do: %__MODULE__{live_socket | main_name: view.name},
           else: live_socket
       else
         live_socket
@@ -219,7 +240,7 @@ defmodule LiveView.LiveSocket do
     {:ok, view, live_socket} = new_view(live_socket, opts)
 
     live_socket = %__MODULE__{live_socket |
-      roots: Map.put(live_socket.roots, view.id, view)
+      roots: Map.put(live_socket.roots, view.id, view.name)
     }
 
     {:ok, view, live_socket}
@@ -253,8 +274,8 @@ defmodule LiveView.LiveSocket do
 
       :ok = View.exec_new_mounted(view)
 
-      if !live_socket.main,
-        do: %__MODULE__{live_socket | main: view},
+      if !live_socket.main_name,
+        do: %__MODULE__{live_socket | main_name: view.name},
         else: live_socket
     else
       live_socket
@@ -311,13 +332,10 @@ defmodule LiveView.LiveSocket do
   def attach_receiver(%__MODULE__{name: name}, receiver),
     do: GenServer.call(name, {:attach_receiver, receiver})
 
-  def send_to_receiver(%__MODULE__{name: name, receiver: receiver} = live_socket, event_name) do
-    if receiver do
-      send(receiver, {event_name, build_payload(live_socket, event_name)})
-    end
-
-    {:ok, live_socket}
-  end
+  def send_to_receiver(name, event) when is_atom(name),
+    do: send_to_receiver(%__MODULE__{name: name}, event)
+  def send_to_receiver(%__MODULE__{name: name}, event),
+    do: GenServer.cast(name, {:send_to_receiver, event})
 
   defp build_payload(%__MODULE__{} = live_socket, :view_tree) do
     {:ok, window} = Window.get(live_socket.window_name)
@@ -328,4 +346,61 @@ defmodule LiveView.LiveSocket do
     do: binding_prefix
   def binding(%__MODULE__{} = live_socket, kind),
     do: "#{get_binding_prefix(live_socket)}#{kind}"
+
+  def has_pending_link?(%__MODULE__{pending_link: pending_link} = live_socket),
+    do: !!pending_link
+
+  def request_dom_update(%__MODULE__{transitions: transitions} = live_socket, callback) do
+    transitions = TransitionSet.after(transitions, callback)
+
+    %__MODULE__{live_socket |
+      transitions: transitions
+    }
+  end
+
+  def transition(%__MODULE__{transitions: transitions} = live_socket, time, on_start, on_done \\ fn() -> nil end) do
+    transitions = TransitionSet.add_transition(transitions, time, on_start, on_done)
+
+    %__MODULE__{live_socket |
+      transitions: transitions
+    }
+  end
+
+  def history_redirect(%__MODULE__{} = live_socket,  event, href, link_state, flash, target_el \\ nil) do
+    click_loading = target_el and event.is_trusted? and event.type != :popstate
+    {:ok, window} = Window.get(live_socket.window_name)
+
+    if !is_connected?(live_socket) || View.is_main?(live_socket.main_name) do
+      Browser.redirect(href, flash)
+    else
+      href = case URI.parse(href) do
+        %URI{scheme: nil, host: nil} = uri ->
+          "#{window.location.protocol}//#{window.location.host}#{href}"
+        _other -> href
+      end
+
+      scroll = 0
+
+      # with_page_loading(live_socket, %{to: href, kind: :redirect}, fn(done) ->
+      #   replace_main(live_socket, href, flash, fn(link_ref) ->
+      #     if link_ref == live_socket.link_ref do
+      #       # TODO store history position
+      #       # current_history_position = live_socket.current_history_position + 1
+      #       window = Browser.update_current_state(window, fn(state) -> 
+      #         Map.put(state, back_type: :redirect)
+      #       end)
+      #
+      #       # Browser.push_state(window, link_state, %{
+      #       #   type: :redirect,
+      #       #   id: 
+      #       # })
+      #     end
+      #
+      #   end)
+      # end)
+    end
+  end
+
+  def is_connected?(%__MODULE__{socket: socket}),
+    do: Slipstream.Socket.connected?(socket)
 end

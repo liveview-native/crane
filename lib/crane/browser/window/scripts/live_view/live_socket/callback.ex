@@ -3,7 +3,11 @@ defmodule LiveView.LiveSocket.Callback do
   @moduledoc false
 
   alias LiveView.LiveSocket
-  alias Slipstream.{Events, Socket, TelemetryHelper}
+  alias Slipstream.{
+    Events,
+    Socket,
+    TelemetryHelper
+  }
 
   @known_callbacks [{:__no_op__, 2} | Slipstream.behaviour_info(:callbacks)]
 

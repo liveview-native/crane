@@ -162,7 +162,7 @@ defmodule Crane.Object do
         defoverridable new!: 1
 
         def get(name) when is_binary(name),
-          do: get(String.to_existing_atom(name))
+          do: get(%__MODULE__{name: String.to_existing_atom(name)})
         def get(name) when is_atom(name),
           do: get(%__MODULE__{name: name})
         def get(%__MODULE__{name: name}),
@@ -170,6 +170,7 @@ defmodule Crane.Object do
 
         defoverridable get: 1
 
+        def get!(nil), do: nil
         def get!(name) when is_binary(name),
           do: get!(String.to_existing_atom(name))
         def get!(name) when is_atom(name),
@@ -183,6 +184,10 @@ defmodule Crane.Object do
 
         def close(%__MODULE__{name: name}),
           do: GenServer.stop(name, :normal)
+        def close(name) when is_atom(name),
+          do: close(%__MODULE__{name: name})
+        def close(name) when is_binary(name),
+          do: close(%__MODULE__{name: String.to_existing_atom(name)})
 
         defoverridable close: 1
 
@@ -266,13 +271,18 @@ defmodule Crane.Object do
 
         defoverridable [{unquote(String.to_atom("close_#{name}!")), 1}]
       else
-        def unquote(new_name)(%__MODULE__{name: name}, opts \\ []),
+        def unquote(new_name)(name, opts \\ [])
+        def unquote(new_name)(%__MODULE__{name: name}, opts),
           do: GenServer.call(name, {unquote(new_name), opts})
+        def unquote(new_name)(name, opts) when is_atom(name),
+          do: unquote(new_name)(%__MODULE__{name: name}, opts)
+        def unquote(new_name)(name, opts) when is_binary(name),
+          do: unquote(new_name)(%__MODULE__{name: String.to_existing_atom(name)}, opts)
 
         defoverridable [{unquote(new_name), 2}]
 
-        def unquote(String.to_atom("#{new_name}!"))(%__MODULE__{} = parent, opts \\ []) do
-          {:ok, object} = unquote(new_name)(parent, opts)
+        def unquote(String.to_atom("#{new_name}!"))(parent_or_name, opts \\ []) do
+          {:ok, object} = unquote(new_name)(parent_or_name, opts)
           object
         end
 
