@@ -176,7 +176,7 @@ defmodule Crane.Object do
         def get!(name) when is_binary(name),
           do: get!(String.to_existing_atom(name))
         def get!(name) when is_atom(name),
-          do: get(%__MODULE__{name: name})
+          do: get!(%__MODULE__{name: name})
         def get!(object) do
           {:ok, object} = get(object)
           object
