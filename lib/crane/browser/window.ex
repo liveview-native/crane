@@ -180,7 +180,7 @@ defmodule Crane.Browser.Window do
       name: window.name,
       stylesheets: window.stylesheets,
       browser_name: window.browser_name,
-      view_trees: Map.drop(window.view_trees, [:document])
+      view_trees: Map.put(window.view_trees, :document, window.view_trees.document.pid)
     }
   end
 
