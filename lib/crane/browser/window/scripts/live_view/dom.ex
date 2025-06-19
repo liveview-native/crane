@@ -1,6 +1,7 @@
 defmodule LiveView.DOM do
   use LiveView.Constants, [
     :phx_parent_id,
+    :phx_private,
     :phx_sticky,
     :phx_session
   ]
@@ -9,8 +10,7 @@ defmodule LiveView.DOM do
     do: []
 
   def all(node, selector) do
-    node
-    |> Floki.find(selector)
+    apply(node.__struct__, :query_selector_all, [selector])
   end
 
   def is_phx_sticky?(node),
@@ -35,7 +35,7 @@ defmodule LiveView.DOM do
     end)
 
   def find_phx_children(el, parent_id),
-    do: all(el, ~S'[#{@phx_sessoin}][#{@phx_parent_id}="#{parent_id}"]')
+    do: all(el, ~s'[#{@phx_session}][#{@phx_parent_id}="#{parent_id}"]')
 
   def has_attribute?(el, attribute),
     do: !!get_attribute(el, attribute)

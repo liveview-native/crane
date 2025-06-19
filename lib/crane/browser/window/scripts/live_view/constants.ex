@@ -17,6 +17,7 @@ defmodule LiveView.Constants do
     phx_magic_id: "data-phx-id",
     phx_main: "data-phx-main",
     phx_parent_id: "data-phx-parent-id",
+    phx_private: "phxPrivate",
     phx_reload_status: "__phoenix_reload_status__",
     phx_ref_loading: "data-phx-ref-loading",
     phx_ref_lock: "data-phx-ref-lock",

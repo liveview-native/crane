@@ -152,7 +152,7 @@ defmodule Crane.Browser.Window do
     do: GenServer.call(name, {:fetch, options})
 
   def visit(%__MODULE__{name: name}, options) do
-    {:ok, window} = GenServer.call(name, {:visit, options})
+    {:ok, window} = GenServer.call(name, {:visit, options}, :infinity)
     {:ok, window}
   end
 
@@ -180,19 +180,19 @@ defmodule Crane.Browser.Window do
       name: window.name,
       stylesheets: window.stylesheets,
       browser_name: window.browser_name,
-      view_trees: Map.drop(window.view_trees, [:document, :body])
+      view_trees: Map.drop(window.view_trees, [:document])
     }
   end
 
   def reset_view_trees(%__MODULE__{} = window) do
     document = Floki.traverse_and_update(window.view_trees.document, fn 
-      {"body", attributes, children} ->
+      {"body", attributes, _children} ->
         {"body", attributes, window.view_trees.body}
       other -> other
     end)
 
     {_docuemnt, view_trees} = Fuse.find_view_trees({document, %{}})
 
-    {:ok, window} = update(window, %{view_trees: view_trees})
+    update(window, %{view_trees: view_trees})
   end
 end

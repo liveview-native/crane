@@ -458,7 +458,7 @@ defmodule LiveView.View do
 
     container = build_container(view, {container_tag_name, container_attrs, container_children})
 
-    Window.update(window, view_trees: Map.merge(window.view_trees, %{body: body, container: container}))
+    # Window.update(window, view_trees: Map.merge(window.view_trees, %{body: body, container: container}))
 
     view = %__MODULE__{view |
       rendered: view.rendered,

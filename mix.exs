@@ -58,6 +58,8 @@ defmodule Crane.MixProject do
       # {:live_debugger, "~> 0.1.4", only: :dev},
       # {:live_debugger, path: "../live-debugger", only: :dev},
 
+      {:gen_dom, github: "liveview-native/gen_dom"},
+
       {:elixirkit, github: "liveview-native/elixirkit", branch: "main"},
       {:slipstream, "~> 1.2"},
 

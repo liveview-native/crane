@@ -81,6 +81,6 @@ defmodule Crane do
   end
 
   def launch(options) do
-    GenServer.call(Crane, {:launch, options})
+    GenServer.call(Crane, {:launch, options}, :infinity)
   end
 end
