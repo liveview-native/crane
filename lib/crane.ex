@@ -15,7 +15,6 @@ defmodule Crane do
     with pid when not is_nil(pid) <- Process.whereis(name),
       true <- Process.alive?(pid),
       {:ok, window} <- Crane.Browser.Window.get(name),
-      {:ok, window} <- Crane.Browser.Window.reset_view_trees(window),
       {:ok, browser} <- Crane.Browser.get(window.browser_name) do
         for socket <- Crane.Browser.Window.sockets!(window) do
           GenServer.cast(socket.name, {:attach_receiver, opts[:receiver]})
