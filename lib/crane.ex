@@ -31,7 +31,7 @@ defmodule Crane do
           {:ok, window} <- Crane.Browser.Window.visit(window, opts) do
             {:reply, {:ok, Window.strip!(window), Browser.strip!(browser)}, crane}
         else
-          error ->
+          _error ->
             {:reply, {:error, "failed to launch"}, crane}
         end
   

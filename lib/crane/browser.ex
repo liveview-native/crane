@@ -63,7 +63,7 @@ defmodule Crane.Browser do
   end
 
   def strip!(%__MODULE__{} = browser),
-    do: %__MODULE__{
+    do: %{
       name: browser.name
     }
 end
