@@ -232,12 +232,12 @@ defmodule LiveView.LiveSocket do
   end
 
   defp is_phx_view?(el),
-    do: Floki.attribute(el, @phx_session) != []
+    do: !!Map.get(el.attributes, @phx_session)
 
   defp join_root_views(live_socket, document) do
-    Floki.find(document, "[#{@phx_session}]:not([#{@phx_parent_id}])")
+    DOM.all(document, "[#{@phx_session}]:not([#{@phx_parent_id}])")
     |> Enum.reduce(live_socket, fn(root_el, live_socket) ->
-      if !get_root_by_id(live_socket.roots, Floki.attribute(root_el, "id")) do
+      if !get_root_by_id(live_socket.roots, root_el.id) do
         {:ok, view, live_socket} = new_root_view(live_socket, el: root_el, live_socket: live_socket)
 
         view = if DOM.is_phx_sticky?(root_el),
@@ -246,7 +246,7 @@ defmodule LiveView.LiveSocket do
 
         {:ok, view, live_socket} = View.join(view, live_socket)
 
-        if Floki.attribute(root_el, @phx_main) != [],
+        if Map.get(root_el.attributes, @phx_main),
           do: %__MODULE__{live_socket | main_name: view.name},
           else: live_socket
       else

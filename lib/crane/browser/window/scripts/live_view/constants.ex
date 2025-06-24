@@ -26,6 +26,8 @@ defmodule LiveView.Constants do
     phx_skip: "data-phx-skip",
     phx_static: "data-phx-static",
     phx_sticky: "data-phx-sticky",
+    phx_upload_ref: "data-phx-upload-ref",
+    phx_view_ref: "data-phx-view",
     reload_jitter_max: 10_000,
     reload_jitter_min: 5_000,
     transports: %{
