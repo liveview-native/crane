@@ -15,7 +15,7 @@ defmodule LiveView.DOM do
   }
 
   def by_id(%Document{} = document, id) do
-    GenDOM.Doccument.get_element_by_id(document, id)
+    GenDOM.Document.get_element_by_id(document, id)
     |> case do
       nil ->
         # log - "no id found for #{id}"
@@ -65,7 +65,7 @@ defmodule LiveView.DOM do
   end
 
   def find_upload_inputs(node) do
-    document = GenServer.call(node.owner_docuemnt, :get)
+    document = GenServer.call(node.owner_document, :get)
     form_id = node.id
     inputs_outside_form = all(document, ~s'input[type="file"][#{@phx_upload_ref}][form="#{form_id}"])')
 
@@ -76,7 +76,7 @@ defmodule LiveView.DOM do
     all(document, ~s'[#{@phx_view_ref}="#{view_id}"][#{@phx_component}="#{cid}"]')
   end
 
-  def is_phx_destoryed?(node) do
+  def is_phx_destroyed?(node) do
     !!(node.id == "" && private(node, "destroyed"))
   end
 
@@ -119,7 +119,7 @@ defmodule LiveView.DOM do
   end
 
   def find_existing_parent_cids(document, view_id, cids) do
-    {parent_cids, children_cids} = 
+    {parent_cids, children_cids} =
       Enum.reduce(cids, {MapSet.new(), MapSet.new()}, fn(cid, {parent_cids, children_cids}) ->
         all(document, ~s'[#{@phx_view_ref}="#{view_id}"][#{@phx_component}="#{cid}"]')
         |> Enum.reduce({parent_cids, children_cids}, fn(parent, {parent_cids, children_cids}) ->
@@ -233,9 +233,9 @@ defmodule LiveView.DOM do
               else
                 callback.()
                 task = Task.async(fn ->
-                  :timer.sleep timout
+                  :timer.sleep timeout
                   if async_filter.(),
-                    trigger_cycle(element, @debounce_trigger)
+                    do: trigger_cycle(element, @debounce_trigger)
                 end)
 
                 put_private(element, @throttled, task)
@@ -252,5 +252,14 @@ defmodule LiveView.DOM do
         end
     end
   end
-  
+
+  def inc_cycle(a, b, c), do: raise "not implemented"
+
+  def once(a, b), do: raise "not implemented"
+
+  def is_phx_child?(element), do: raise "not implemented"
+
+  def trigger_cycle(element, trigger, cycle \\ nil), do: raise "not implemented"
+
+  def find_phx_children(a, b), do: raise "not implemented"
 end

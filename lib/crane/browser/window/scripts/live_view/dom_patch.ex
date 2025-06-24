@@ -21,7 +21,7 @@ defmodule LiveView.DOMPatch do
     view: nil,
     live_socket: nil,
     container: nil,
-    id: nil, 
+    id: nil,
     root_id: nil,
     markup: nil,
     streams: nil,
@@ -125,7 +125,7 @@ defmodule LiveView.DOMPatch do
 
   def mark_prunable_content_for_removal(%__MODULE__{} = dom_patch) do
     phx_update = LiveSocket.binding(dom_patch.live_socket, @phx_update)
-    container = Floki.find_and_udpate(dom_patch.container, "[#{phx_update}=appennd] > *, [#{phx_update}=prepend] > *", fn
+    container = Floki.find_and_update(dom_patch.container, "[#{phx_update}=append] > *, [#{phx_update}=prepend] > *", fn
       {tag_name, attributes, children} ->
         attributes =
           Enum.into(attributes, %{})
@@ -145,6 +145,6 @@ defmodule LiveView.DOMPatch do
   end
 
   def set_stream_ref(el, ref) do
-    
+
   end
 end
