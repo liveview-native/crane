@@ -58,9 +58,10 @@ defmodule Crane.MixProject do
       # {:live_debugger, "~> 0.1.4", only: :dev},
       # {:live_debugger, path: "../live-debugger", only: :dev},
 
+      # {:gen_dom, path: "../gen_dom"},
       {:gen_dom, github: "liveview-native/gen_dom"},
 
-      {:elixirkit, github: "liveview-native/elixirkit", branch: "main"},
+      {:elixir_pack, github: "otp-interop/elixir_pack", branch: "main"},
       {:slipstream, "~> 1.2"},
 
       {:plug_crypto, github: "elixir-plug/plug_crypto", branch: "main", override: true},

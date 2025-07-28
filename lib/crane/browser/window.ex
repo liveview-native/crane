@@ -1,4 +1,6 @@
 defmodule Crane.Browser.Window do
+  # @derive {Inspect, only: [:pid, :tag_name, :id, :class_list, :attributes]}
+
   alias Crane.{
     Browser,
     Fuse
@@ -11,7 +13,6 @@ defmodule Crane.Browser.Window do
   }
 
   use Crane.Object,
-    history: %History{},
     logger: nil,
     owner: Browser,
     view_trees: %{
@@ -22,10 +23,78 @@ defmodule Crane.Browser.Window do
       reconnecting: [],
       error: []
     },
-    location: %Location{},
     stylesheets: [],
     response: nil,
-    scripts: []
+    scripts: [],
+
+    # Standard properties
+    caches: nil,
+    client_information: nil,
+    closed: false,
+    cookie_store: nil,
+    credentialless: nil,
+    cross_origin_isolated: nil,
+    crypto: nil,
+    custom_elements: nil,
+    device_pixel_ratio: nil,
+    document: nil,
+    document_picture_in_picture: nil,
+    fence: nil,
+    frame_element: nil,
+    frames: [],
+    full_screen: false,
+    history: %History{},
+    indexed_db: nil,
+    inner_height: nil,
+    inner_width: nil,
+    is_secure_context: nil,
+    launch_queue: nil,
+    length: 0,
+    local_storage: nil,
+    location: %Location{},
+    locationbar: nil,
+    menubar: nil,
+    moz_inner_screen_x: nil,
+    moz_inner_screen_y: nil,
+    # TODO: fix this when moved to pids
+    # name: "",
+    navigation: nil,
+    navigator: nil,
+    opener: nil,
+    origin: nil,
+    origin_agent_cluster: nil,
+    outer_height: nil,
+    outer_width: nil,
+    page_x_offset: 0,
+    page_y_offset: 0,
+    parent: nil,
+    performance: nil,
+    personalbar: nil,
+    scheduler: nil,
+    screen: nil,
+    screen_x: nil,
+    screen_left: nil,
+    screen_y: nil,
+    screen_top: nil,
+    scrollbars: nil,
+    scroll_max_x: nil,
+    scroll_max_y: nil,
+    scroll_x: 0,
+    scroll_y: 0,
+    self: nil,
+    session_storage: nil,
+    shared_storage: nil,
+    speech_synthesis: nil,
+    statusbar: nil,
+    toolbar: nil,
+    top: nil,
+    trusted_types: nil,
+    visual_viewport: nil,
+    window: nil,
+    event: nil,
+    external: nil,
+    orientation: nil,
+    status: ""
 
   defchild socket: WebSocket
   
@@ -106,7 +175,8 @@ defmodule Crane.Browser.Window do
 
         {:reply, {:ok, window}, window, {:continue, {:run_scripts, receiver: receiver}}}
 
-      error -> error
+      error ->
+        error
     end
   end
 
@@ -180,7 +250,7 @@ defmodule Crane.Browser.Window do
       name: window.name,
       stylesheets: window.stylesheets,
       browser_name: window.browser_name,
-      view_trees: Map.put(window.view_trees, :document, window.view_trees.document.pid)
+      view_trees: Map.put(window.view_trees, :document, window.view_trees.document)
     }
   end
 
