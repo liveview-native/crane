@@ -1,7 +1,9 @@
 defmodule Crane.Fuse do
   alias Req.Response
 
-  def run_middleware(:visit, %Response{status: 200, body: body} = response) do
+  def run_middleware(type, response, opts \\ [])
+
+  def run_middleware(:visit, %Response{status: 200, body: body} = response, opts) do
     document_pid = GenDOM.Parser.parse_from_string(body, "application/swiftui", [])
     # {:ok, document} = LiveViewNative.Template.Parser.parse_document(body,
     #   strip_comments: true,
@@ -17,12 +19,18 @@ defmodule Crane.Fuse do
 
     view_trees = find_view_trees({document_pid, %{}})
 
-    %{status: 200,
+    response = %{status: 200,
       view_trees: view_trees,
       stylesheets: stylesheets}
+
+    if (receiver_pid = opts[:receiver]) && is_pid(receiver_pid) do
+      send(receiver_pid, {:visit, response})
+    end
+
+    response
   end
 
-  def run_middleware(:visit, %Response{status: status, body: body} = response) do
+  def run_middleware(:visit, %Response{status: status, body: body} = response, opts) do
     %{
       status: status, body: body
     }

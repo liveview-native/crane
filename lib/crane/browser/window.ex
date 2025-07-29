@@ -167,7 +167,7 @@ defmodule Crane.Browser.Window do
 
         window =
           %{window | history: history, response: response, location: location}
-          |> Map.merge(Fuse.run_middleware(:visit, response))
+          |> Map.merge(Fuse.run_middleware(:visit, response, receiver: receiver))
 
         # :ok = GenServer.cast(window.name, {:run_scripts, receiver: receiver})
 
