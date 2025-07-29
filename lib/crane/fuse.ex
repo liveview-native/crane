@@ -2,7 +2,7 @@ defmodule Crane.Fuse do
   alias Req.Response
 
   def run_middleware(:visit, %Response{status: 200, body: body}) do
-    document = GenDOM.Parser.parse_from_string(body, nil, [])
+    document = GenDOM.Parser.parse_from_string(body, "text/html", [])
     # {:ok, document} = LiveViewNative.Template.Parser.parse_document(body,
     #   strip_comments: true,
     #   text_as_node: true,

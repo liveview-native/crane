@@ -13,13 +13,14 @@ defmodule Crane.Browser.Window.WebSocket do
     {:ok, websocket, {:continue, {:init, opts}}} = super(opts)
     {:ok, opts} = Keyword.validate(opts, [url: nil, headers: []])
 
-    opts = Keyword.update(opts, :url, nil, fn 
+    opts = Keyword.update(opts, :url, nil, fn
      "localhost" <> _tail = url -> "http://" <> url
       url -> url
     end)
 
     uri = URI.parse(opts[:url])
 
+    dbg ws_path(uri)
     with {:ok, conn} <- Mint.HTTP.connect(http_scheme(uri), uri.host, uri.port),
       {:ok, conn, ref} <- Mint.WebSocket.upgrade(ws_scheme(uri), conn, ws_path(uri), opts[:headers]),
       http_reply_message <- receive(do: (message -> message)),
@@ -30,7 +31,7 @@ defmodule Crane.Browser.Window.WebSocket do
           conn: conn,
           ref: ref,
           socket: socket,
-        } 
+        }
 
         {:ok, websocket}
     else
@@ -61,12 +62,14 @@ defmodule Crane.Browser.Window.WebSocket do
 
   defp ws_path(%URI{path: nil}),
     do: "/"
-  defp ws_path(%URI{path: path}),
+  defp ws_path(%URI{path: path, query: nil}),
     do: path
+  defp ws_path(%URI{path: path, query: query}),
+    do: path <> "?" <> query
 
   defp parse_stream_responses(responses, ref) do
     Enum.reduce(responses, [], fn
-      {:status, ^ref, status}, acc -> [{:status, status} | acc] 
+      {:status, ^ref, status}, acc -> [{:status, status} | acc]
       {:headers, ^ref, headers}, acc -> [{:headers, headers} | acc]
       _other, acc -> acc
     end)

@@ -44,7 +44,7 @@ defmodule Crane.MixProject do
     [
       {:req, "~> 0.5"},
       {:inflex, "~> 2.0"},
-      {:phoenix_playground, github: "bcardarella/phoenix_playground", branch: "bc-release-compat"},
+      # {:phoenix_playground, github: "bcardarella/phoenix_playground", branch: "bc-release-compat"},
       {:mint_web_socket, "~> 1.0.4"},
       {:floki, "~> 0.37"},
       {:websockex, "~> 0.4"},
@@ -60,7 +60,7 @@ defmodule Crane.MixProject do
 
       {:gen_dom, github: "liveview-native/gen_dom"},
 
-      {:elixirkit, github: "liveview-native/elixirkit", branch: "main"},
+      {:elixir_pack, github: "liveview-native/elixir_pack", branch: "main"},
       {:slipstream, "~> 1.2"},
 
       {:plug_crypto, github: "elixir-plug/plug_crypto", branch: "main", override: true},

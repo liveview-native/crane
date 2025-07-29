@@ -23,7 +23,7 @@ defmodule Crane.Browser.Window.Console do
       List.insert_at(entries, -1, message)
     end)
 
-    Phoenix.PubSub.broadcast(PhoenixPlayground.PubSub, "logger", {:foobar, "123"})
+    # Phoenix.PubSub.broadcast(PhoenixPlayground.PubSub, "logger", {:foobar, "123"})
 
     {:noreply, %__MODULE__{console | logs: logs}}
   end
