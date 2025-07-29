@@ -44,7 +44,7 @@ defmodule Crane.MixProject do
     [
       {:req, "~> 0.5"},
       {:inflex, "~> 2.0"},
-      {:phoenix_playground, github: "bcardarella/phoenix_playground", branch: "bc-release-compat"},
+      # {:phoenix_playground, github: "bcardarella/phoenix_playground", branch: "bc-release-compat"},
       {:mint_web_socket, "~> 1.0.4"},
       {:floki, "~> 0.37"},
       {:websockex, "~> 0.4"},

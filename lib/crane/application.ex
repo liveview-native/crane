@@ -2,12 +2,12 @@ defmodule Crane.Application do
  use Application
 
   def start(_type, _args) do
-    live_reload = Application.get_env(:phoenix_playground, :live_reload)
+    # live_reload = Application.get_env(:phoenix_playground, :live_reload)
 
-    phx_port = System.get_env("PHX_PORT", "4100") |> make_integer()
+    # phx_port = System.get_env("PHX_PORT", "4100") |> make_integer()
 
     children = [
-      {PhoenixPlayground, plug: Crane.Phoenix.Router, live_reload: live_reload, open_browser: false, ip: {0, 0, 0, 0}, port: phx_port},
+      # {PhoenixPlayground, plug: Crane.Phoenix.Router, live_reload: live_reload, open_browser: false, ip: {0, 0, 0, 0}, port: phx_port},
       {Crane, []},
     ]
 

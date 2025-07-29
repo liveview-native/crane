@@ -54,8 +54,8 @@ defmodule Crane.Utils do
     do: Atom.to_string(topic) |> subscribe()
 
   def subscribe(topic) do 
-    pubsub = Application.get_env(:crane, :pubsub, PhoenixPlayground.PubSub)
-    :ok = Phoenix.PubSub.subscribe(pubsub, topic)
+    # pubsub = Application.get_env(:crane, :pubsub, PhoenixPlayground.PubSub)
+    # :ok = Phoenix.PubSub.subscribe(pubsub, topic)
   end
 
   def unsubscribe(%{name: topic}),
@@ -65,8 +65,8 @@ defmodule Crane.Utils do
     do: Atom.to_string(topic) |> unsubscribe()
 
   def unsubscribe(topic) do
-    pubsub = Application.get_env(:crane, :pubsub, PhoenixPlayground.PubSub)
-    :ok = Phoenix.PubSub.unsubscribe(pubsub, topic)
+    # pubsub = Application.get_env(:crane, :pubsub, PhoenixPlayground.PubSub)
+    # :ok = Phoenix.PubSub.unsubscribe(pubsub, topic)
   end
 
   def broadcast(%{name: topic}, message),
@@ -76,7 +76,7 @@ defmodule Crane.Utils do
     do: Atom.to_string(topic) |> broadcast(message)
 
   def broadcast(topic, message) do
-    pubsub = Application.get_env(:crane, :pubsub, PhoenixPlayground.PubSub)
-    :ok = Phoenix.PubSub.broadcast(pubsub, topic, message)
+    # pubsub = Application.get_env(:crane, :pubsub, PhoenixPlayground.PubSub)
+    # :ok = Phoenix.PubSub.broadcast(pubsub, topic, message)
   end
 end

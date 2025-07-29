@@ -5,7 +5,7 @@ defmodule Crane.Phoenix.Router do
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
-    plug :put_root_layout, html: {PhoenixPlayground.Layout, :root}
+    # plug :put_root_layout, html: {PhoenixPlayground.Layout, :root}
     plug :put_secure_browser_headers
   end
 

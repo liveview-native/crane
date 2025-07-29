@@ -61,8 +61,10 @@ defmodule Crane.Browser.Window.WebSocket do
 
   defp ws_path(%URI{path: nil}),
     do: "/"
-  defp ws_path(%URI{path: path}),
+  defp ws_path(%URI{path: path, query: nil}),
     do: path
+  defp ws_path(%URI{path: path, query: query}),
+    do: "#{path}?#{query}"
 
   defp parse_stream_responses(responses, ref) do
     Enum.reduce(responses, [], fn
