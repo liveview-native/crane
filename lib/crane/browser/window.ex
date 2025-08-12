@@ -265,6 +265,7 @@ defmodule Crane.Browser.Window do
   def strip!(%__MODULE__{} = window) do
   %{
       name: window.name,
+      event_registry: window.event_registry,
       stylesheets: window.stylesheets,
       browser_name: window.browser_name,
       view_trees: window.view_trees
