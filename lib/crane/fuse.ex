@@ -4,20 +4,19 @@ defmodule Crane.Fuse do
   def run_middleware(type, response, opts \\ [])
 
   def run_middleware(:visit, %Response{status: 200, body: body} = response, opts) do
-    document_pid = GenDOM.Parser.parse_from_string(body, "application/swiftui", [])
-    # {:ok, document} = LiveViewNative.Template.Parser.parse_document(body,
-    #   strip_comments: true,
-    #   text_as_node: true,
-    #   inject_identity: true)
+    document = GenDOM.Parser.parse_from_string(body, "application/swiftui", [
+      window: opts[:window],
+      event_registry: opts[:event_registry]
+    ])
 
     stylesheets =
-      GenDOM.Document.query_selector_all(document_pid, "Style")
+      GenDOM.Document.query_selector_all(document, "Style")
       |> Enum.map(fn(pid) ->
         element = GenDOM.Element.get(pid)
         Map.get(element.attributes, "url")
       end)
 
-    view_trees = find_view_trees({document_pid, %{}})
+    view_trees = find_view_trees({document.pid, %{}})
 
     response = %{status: 200,
       view_trees: view_trees,

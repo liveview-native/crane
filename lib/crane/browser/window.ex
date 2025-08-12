@@ -15,6 +15,7 @@ defmodule Crane.Browser.Window do
   use Crane.Object,
     logger: nil,
     owner: Browser,
+    event_registry: nil,
     view_trees: %{
       document: [],
       body: [],
@@ -99,8 +100,20 @@ defmodule Crane.Browser.Window do
   defchild socket: WebSocket
   
   @impl true
+  def init(opts) do
+    {:ok, window, _continue} = super(opts)
+
+    {:ok, event_registry} = GenDOM.EventRegistry.start_link(window: self())
+
+    {:ok, Map.put(window, :event_registry, event_registry)}
+  end
+
+  @impl true
   def handle_continue({:init, _opts}, window) do
+    # {:ok, event_registry} = GenDOM.EventRegistry.start_link(window: self())
+
     {:noreply, %__MODULE__{window |
+      # event_registry: event_registry,
       logger: Logger.new!(window: window)
     }}
   end
@@ -167,7 +180,11 @@ defmodule Crane.Browser.Window do
 
         window =
           %{window | history: history, response: response, location: location}
-          |> Map.merge(Fuse.run_middleware(:visit, response, receiver: receiver))
+          |> Map.merge(Fuse.run_middleware(:visit, response, [
+            receiver: receiver,
+            window: self(),
+            event_registry: window.event_registry
+          ]))
 
         # :ok = GenServer.cast(window.name, {:run_scripts, receiver: receiver})
 
