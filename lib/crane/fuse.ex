@@ -5,6 +5,7 @@ defmodule Crane.Fuse do
 
   def run_middleware(:visit, %Response{status: 200, body: body} = response, opts) do
     document = GenDOM.Parser.parse_from_string(body, "application/swiftui", [
+      receiver: opts[:receiver],
       window: opts[:window],
       event_registry: opts[:event_registry]
     ])
