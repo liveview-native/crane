@@ -21,6 +21,8 @@ defmodule Crane.Fuse do
 
     response = %{status: 200,
       view_trees: view_trees,
+      window: document.window,
+      event_registry: document.event_registry,
       stylesheets: stylesheets}
 
     if (receiver_pid = opts[:receiver]) && is_pid(receiver_pid) do
