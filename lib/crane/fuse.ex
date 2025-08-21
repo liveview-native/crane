@@ -38,6 +38,26 @@ defmodule Crane.Fuse do
     }
   end
 
+  def find(document_pid) do
+    document = GenServer.call(document_pid, :get)
+    find_children(document.children)
+  end
+
+  defp find_children([]) do
+    :ok
+  end
+
+  defp find_children([child | children]) do
+    child = GenServer.call(child, :get)
+
+    if child.owner_document do
+      find_children(child.children)
+      find_children(children)
+    else
+      inspect(child)
+    end
+  end
+
   def find_view_trees({document_pid, view_trees}) do
     view_trees =
       Map.merge(view_trees, %{
